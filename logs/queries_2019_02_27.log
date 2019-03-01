@@ -1,0 +1,135 @@
+15:25:52.686 [main] INFO org.eclipse.jetty.util.log - Logging initialized @252ms to org.eclipse.jetty.util.log.Slf4jLog
+15:25:52.758 [main] INFO ROOT - Server started on port 8284, with network data repo at /opt/ndex/data/
+15:25:52.817 [main] INFO org.eclipse.jetty.server.Server - jetty-9.4.8.v20171121, build timestamp: 2017-11-21T13:27:37-08:00, git hash: 82b8fb23f757335bb3329d540ce37a2a2615f0a8
+15:25:53.013 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002225: Deploying javax.ws.rs.core.Application: class org.ndexbio.NeighborhoodQueryApplication
+15:25:53.014 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002210: Adding provider singleton org.ndexbio.DefaultExceptionMapper from Application class org.ndexbio.NeighborhoodQueryApplication
+15:25:53.015 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002220: Adding singleton resource org.ndexbio.MessageResource from Application class org.ndexbio.NeighborhoodQueryApplication
+15:25:53.015 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002210: Adding provider singleton org.ndexbio.BadRequestExceptionMapper from Application class org.ndexbio.NeighborhoodQueryApplication
+15:25:53.046 [main] INFO org.eclipse.jetty.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@2d9d4f9d{/,null,AVAILABLE}
+15:25:53.107 [main] INFO org.eclipse.jetty.server.AbstractConnector - Started ServerConnector@3bd40a57{HTTP/1.1,[http/1.1]}{0.0.0.0:8284}
+15:25:53.107 [main] INFO org.eclipse.jetty.server.Server - Started @677ms
+15:25:53.107 [main] INFO org.eclipse.jetty.util.log - Embedded Jetty logging started.
+Server started on port 8284, with network data repo at /opt/ndex/data/
+15:35:39.500 [main] INFO org.eclipse.jetty.util.log - Logging initialized @264ms to org.eclipse.jetty.util.log.Slf4jLog
+15:35:39.548 [main] INFO ROOT - Server started on port 8284, with network data repo at /opt/ndex/data/
+15:35:39.590 [main] INFO org.eclipse.jetty.server.Server - jetty-9.4.8.v20171121, build timestamp: 2017-11-21T13:27:37-08:00, git hash: 82b8fb23f757335bb3329d540ce37a2a2615f0a8
+15:35:39.778 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002225: Deploying javax.ws.rs.core.Application: class org.ndexbio.NeighborhoodQueryApplication
+15:35:39.779 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002210: Adding provider singleton org.ndexbio.DefaultExceptionMapper from Application class org.ndexbio.NeighborhoodQueryApplication
+15:35:39.780 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002220: Adding singleton resource org.ndexbio.MessageResource from Application class org.ndexbio.NeighborhoodQueryApplication
+15:35:39.780 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002210: Adding provider singleton org.ndexbio.BadRequestExceptionMapper from Application class org.ndexbio.NeighborhoodQueryApplication
+15:35:39.814 [main] INFO org.eclipse.jetty.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@2d9d4f9d{/,null,AVAILABLE}
+15:35:39.874 [main] INFO org.eclipse.jetty.server.AbstractConnector - Started ServerConnector@3bd40a57{HTTP/1.1,[http/1.1]}{0.0.0.0:8284}
+15:35:39.874 [main] INFO org.eclipse.jetty.server.Server - Started @642ms
+15:35:39.874 [main] INFO org.eclipse.jetty.util.log - Embedded Jetty logging started.
+Server started on port 8284, with network data repo at /opt/ndex/data/
+15:41:36.488 [main] INFO org.eclipse.jetty.util.log - Logging initialized @56867ms to org.eclipse.jetty.util.log.Slf4jLog
+15:42:25.779 [main] INFO ROOT - Server started on port 8285, with network data repo at /opt/ndex/data/
+15:42:25.848 [main] INFO org.eclipse.jetty.server.Server - jetty-9.4.8.v20171121, build timestamp: 2017-11-21T13:27:37-08:00, git hash: 82b8fb23f757335bb3329d540ce37a2a2615f0a8
+15:42:26.125 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002225: Deploying javax.ws.rs.core.Application: class org.ndexbio.NeighborhoodQueryApplication
+15:42:26.126 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002210: Adding provider singleton org.ndexbio.DefaultExceptionMapper from Application class org.ndexbio.NeighborhoodQueryApplication
+15:42:26.127 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002210: Adding provider singleton org.ndexbio.BadRequestExceptionMapper from Application class org.ndexbio.NeighborhoodQueryApplication
+15:42:26.128 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002220: Adding singleton resource org.ndexbio.MessageResource from Application class org.ndexbio.NeighborhoodQueryApplication
+15:42:26.183 [main] INFO org.eclipse.jetty.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@8692d67{/,null,AVAILABLE}
+15:42:26.224 [main] INFO org.eclipse.jetty.server.AbstractConnector - Started ServerConnector@5f7b97da{HTTP/1.1,[http/1.1]}{0.0.0.0:8285}
+15:42:26.224 [main] INFO org.eclipse.jetty.server.Server - Started @106642ms
+15:42:26.224 [main] INFO org.eclipse.jetty.util.log - Embedded Jetty logging started.
+Server started on port 8285, with network data repo at /opt/ndex/data/
+javax.ws.rs.NotAllowedException: RESTEASY003650: No resource method found for POST, return 405 with Allow header
+	at org.jboss.resteasy.core.registry.SegmentNode.match(SegmentNode.java:426)
+	at org.jboss.resteasy.core.registry.SegmentNode.match(SegmentNode.java:139)
+	at org.jboss.resteasy.core.registry.RootNode.match(RootNode.java:43)
+	at org.jboss.resteasy.core.registry.RootClassNode.match(RootClassNode.java:48)
+	at org.jboss.resteasy.core.ResourceMethodRegistry.getResourceInvoker(ResourceMethodRegistry.java:467)
+	at org.jboss.resteasy.core.SynchronousDispatcher.getInvoker(SynchronousDispatcher.java:264)
+	at org.jboss.resteasy.core.SynchronousDispatcher.invoke(SynchronousDispatcher.java:201)
+	at org.jboss.resteasy.plugins.server.servlet.ServletContainerDispatcher.service(ServletContainerDispatcher.java:227)
+	at org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher.service(HttpServletDispatcher.java:56)
+	at org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher.service(HttpServletDispatcher.java:51)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:791)
+	at org.eclipse.jetty.servlet.ServletHolder.handle(ServletHolder.java:860)
+	at org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:535)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextHandle(ScopedHandler.java:188)
+	at org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1253)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:168)
+	at org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:473)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:166)
+	at org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1155)
+	at org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:141)
+	at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:132)
+	at org.eclipse.jetty.server.Server.handle(Server.java:530)
+	at org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:347)
+	at org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:256)
+	at org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:279)
+	at org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:102)
+	at org.eclipse.jetty.io.ChannelEndPoint$2.run(ChannelEndPoint.java:124)
+	at org.eclipse.jetty.util.thread.strategy.EatWhatYouKill.doProduce(EatWhatYouKill.java:247)
+	at org.eclipse.jetty.util.thread.strategy.EatWhatYouKill.produce(EatWhatYouKill.java:140)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:708)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$2.run(QueuedThreadPool.java:626)
+	at java.lang.Thread.run(Thread.java:745)
+org.ndexbio.model.exceptions.NdexException: Uncaught exception javax.ws.rs.NotFoundException: RESTEASY003210: Could not find resource for full path: http://localhost:8080/ndexbio-rest/v2//batch/network/summary
+	at org.ndexbio.rest.client.NdexRestClient.processNdexSpecificException(NdexRestClient.java:922)
+	at org.ndexbio.rest.client.NdexRestClient.postNdexList(NdexRestClient.java:604)
+	at org.ndexbio.rest.client.NdexRestClientModelAccessLayer.getNetworkSummariesByIds(NdexRestClientModelAccessLayer.java:470)
+	at org.ndexbio.MessageResource.getSource(MessageResource.java:129)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:497)
+	at org.jboss.resteasy.core.MethodInjectorImpl.invoke(MethodInjectorImpl.java:140)
+	at org.jboss.resteasy.core.ResourceMethodInvoker.invokeOnTarget(ResourceMethodInvoker.java:294)
+	at org.jboss.resteasy.core.ResourceMethodInvoker.invoke(ResourceMethodInvoker.java:248)
+	at org.jboss.resteasy.core.ResourceMethodInvoker.invoke(ResourceMethodInvoker.java:235)
+	at org.jboss.resteasy.core.SynchronousDispatcher.invoke(SynchronousDispatcher.java:402)
+	at org.jboss.resteasy.core.SynchronousDispatcher.invoke(SynchronousDispatcher.java:209)
+	at org.jboss.resteasy.plugins.server.servlet.ServletContainerDispatcher.service(ServletContainerDispatcher.java:227)
+	at org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher.service(HttpServletDispatcher.java:56)
+	at org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher.service(HttpServletDispatcher.java:51)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:791)
+	at org.eclipse.jetty.servlet.ServletHolder.handle(ServletHolder.java:860)
+	at org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:535)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextHandle(ScopedHandler.java:188)
+	at org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1253)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:168)
+	at org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:473)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:166)
+	at org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1155)
+	at org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:141)
+	at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:132)
+	at org.eclipse.jetty.server.Server.handle(Server.java:530)
+	at org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:347)
+	at org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:256)
+	at org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:279)
+	at org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:102)
+	at org.eclipse.jetty.io.ChannelEndPoint$2.run(ChannelEndPoint.java:124)
+	at org.eclipse.jetty.util.thread.strategy.EatWhatYouKill.doProduce(EatWhatYouKill.java:247)
+	at org.eclipse.jetty.util.thread.strategy.EatWhatYouKill.produce(EatWhatYouKill.java:140)
+	at org.eclipse.jetty.util.thread.strategy.EatWhatYouKill.run(EatWhatYouKill.java:131)
+	at org.eclipse.jetty.util.thread.ReservedThreadExecutor$ReservedThread.run(ReservedThreadExecutor.java:382)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:708)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$2.run(QueuedThreadPool.java:626)
+	at java.lang.Thread.run(Thread.java:745)
+15:47:49.983 [main] INFO org.eclipse.jetty.util.log - Logging initialized @3604ms to org.eclipse.jetty.util.log.Slf4jLog
+15:47:50.043 [main] INFO ROOT - Server started on port 8285, with network data repo at /opt/ndex/data/
+15:47:50.094 [main] INFO org.eclipse.jetty.server.Server - jetty-9.4.8.v20171121, build timestamp: 2017-11-21T13:27:37-08:00, git hash: 82b8fb23f757335bb3329d540ce37a2a2615f0a8
+15:47:50.356 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002225: Deploying javax.ws.rs.core.Application: class org.ndexbio.NeighborhoodQueryApplication
+15:47:50.358 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002220: Adding singleton resource org.ndexbio.MessageResource from Application class org.ndexbio.NeighborhoodQueryApplication
+15:47:50.358 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002210: Adding provider singleton org.ndexbio.BadRequestExceptionMapper from Application class org.ndexbio.NeighborhoodQueryApplication
+15:47:50.359 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002210: Adding provider singleton org.ndexbio.DefaultExceptionMapper from Application class org.ndexbio.NeighborhoodQueryApplication
+15:47:50.396 [main] INFO org.eclipse.jetty.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@49c6c24f{/,null,AVAILABLE}
+15:47:50.435 [main] INFO org.eclipse.jetty.server.AbstractConnector - Started ServerConnector@7103cb56{HTTP/1.1,[http/1.1]}{0.0.0.0:8285}
+15:47:50.435 [main] INFO org.eclipse.jetty.server.Server - Started @4060ms
+15:47:50.435 [main] INFO org.eclipse.jetty.util.log - Embedded Jetty logging started.
+Server started on port 8285, with network data repo at /opt/ndex/data/
+15:50:04.884 [main] INFO org.eclipse.jetty.util.log - Logging initialized @5481ms to org.eclipse.jetty.util.log.Slf4jLog
+15:50:04.944 [main] INFO ROOT - Server started on port 8285, with network data repo at /opt/ndex/data/
+15:50:04.997 [main] INFO org.eclipse.jetty.server.Server - jetty-9.4.8.v20171121, build timestamp: 2017-11-21T13:27:37-08:00, git hash: 82b8fb23f757335bb3329d540ce37a2a2615f0a8
+15:50:05.251 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002225: Deploying javax.ws.rs.core.Application: class org.ndexbio.NeighborhoodQueryApplication
+15:50:05.253 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002210: Adding provider singleton org.ndexbio.DefaultExceptionMapper from Application class org.ndexbio.NeighborhoodQueryApplication
+15:50:05.253 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002210: Adding provider singleton org.ndexbio.BadRequestExceptionMapper from Application class org.ndexbio.NeighborhoodQueryApplication
+15:50:05.254 [main] INFO org.jboss.resteasy.resteasy_jaxrs.i18n - RESTEASY002220: Adding singleton resource org.ndexbio.MessageResource from Application class org.ndexbio.NeighborhoodQueryApplication
+15:50:05.295 [main] INFO org.eclipse.jetty.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@79351f41{/,null,AVAILABLE}
+15:50:05.333 [main] INFO org.eclipse.jetty.server.AbstractConnector - Started ServerConnector@2e8e8225{HTTP/1.1,[http/1.1]}{0.0.0.0:8285}
+15:50:05.333 [main] INFO org.eclipse.jetty.server.Server - Started @5934ms
+15:50:05.333 [main] INFO org.eclipse.jetty.util.log - Embedded Jetty logging started.
+Server started on port 8285, with network data repo at /opt/ndex/data/
