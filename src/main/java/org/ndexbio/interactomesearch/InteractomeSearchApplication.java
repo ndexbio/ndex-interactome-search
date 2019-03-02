@@ -1,19 +1,20 @@
-package org.ndexbio;
+package org.ndexbio.interactomesearch;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.core.Application;
 
-public class NeighborhoodQueryApplication extends Application {
+public class InteractomeSearchApplication extends Application {
 
     	 private final Set<Object> _providers = new HashSet<>();
 
-	  public NeighborhoodQueryApplication() {
+	  public InteractomeSearchApplication() {
 		  _providers.add(new MessageResource());
 		 
 	        _providers.add(new DefaultExceptionMapper());
 	        _providers.add(new BadRequestExceptionMapper());
+	        _providers.add(new ObjectNotFoundExceptionMapper());
 
 	  }
 

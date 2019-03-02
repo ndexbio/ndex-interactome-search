@@ -1,4 +1,4 @@
-package org.ndexbio;
+package org.ndexbio.interactomesearch;
 /**
  * Copyright (c) 2013, 2016, The Regents of the University of California, The Cytoscape Consortium
  * All rights reserved.

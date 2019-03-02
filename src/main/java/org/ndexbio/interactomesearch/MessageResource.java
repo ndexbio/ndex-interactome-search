@@ -1,4 +1,4 @@
-package org.ndexbio;
+package org.ndexbio.interactomesearch;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -103,7 +103,7 @@ public class MessageResource {
 		  SearchWorkerThread t = new SearchWorkerThread(geneList, taskId);
 		  t.start();
 		}	
-		String url = URLPrefix  + "/v1/task/" + taskId + "/status";
+		String url = "http://"+App.getServiceHost()  +":"+App.getPort() + "/interactome/v1/search/" + taskId + "/status";
 		
 	    Hashtable<String,String> result = new Hashtable<>();
 	    result.put("id", taskId.toString());
@@ -113,28 +113,58 @@ public class MessageResource {
 
 	
 	@GET
-	@Path("/source")
+	@Path("/database")
 	@Produces("application/json")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response getSource() throws NdexException, JsonProcessingException, IOException {
+	public Response getDatabase() throws NdexException, JsonProcessingException, IOException {
 		
-		List<Map<String, String>> sources = new ArrayList<>(); 
+		List<Map<String, String>> sources = new ArrayList<>(App.getDBTable().size()); 
 	
-		NdexRestClientModelAccessLayer ndex = 
-				new NdexRestClientModelAccessLayer(new NdexRestClient(null, null, App.getHostName()));
-
-        Collection<NetworkSummary> nets = 
-        		ndex.getNetworkSummariesByIds(App.getGeneSearcher().getUUIDsFromDB().stream().map( e -> UUID.fromString(e)).collect(Collectors.toList()));
-        for ( NetworkSummary summary : nets) {
+		for ( Map.Entry<String, NetworkShortSummary> entry: App.getDBTable().entrySet()) {
         	HashMap<String,String> rec = new HashMap<>();
-        	rec.put("uuid", summary.getExternalId().toString());
-        	rec.put("description",summary.getDescription());
-        	rec.put("name", summary.getName());
-        	rec.put("url", "http://"+App.getHostName()+"/v2/network/"+ summary.getExternalId() );
+        	rec.put("uuid", entry.getKey());
+        	rec.put("description",entry.getValue().getDescription());
+        	rec.put("name", entry.getValue().getName());
+        	rec.put("url", entry.getValue().getURL() );
         	sources.add(rec);
         }
 		
 		return Response.ok(sources).build();
+
+	}
+	
+	
+	@GET
+	@Path("/search/{id}")
+	@Produces("application/json")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response  getSearchResult(
+			@PathParam("id")final String taskIdStr
+			) throws NdexException {
+		
+		//Log.getRootLogger().info("Interconnect Query term: " + queryParameters.getSearchString());
+		
+//		java.nio.file.Path path = FileSystems.getDefault().getPath("result", taskIdStr.toString());
+
+		SearchStatus status = App.getStatusTable().get(UUID.fromString(taskIdStr));
+		if (status == null ) 
+			throw new ObjectNotFoundException("Can't find task " + taskIdStr);
+		
+		if ( status.getStatus().equals(SearchStatus.complete)) {
+			String resultFilePath = App.getWorkingPath() + "/result/" + taskIdStr + "/result";
+
+	    	try {
+				FileInputStream in = new FileInputStream(resultFilePath)  ;
+			
+			//	setZipFlag();
+				ResponseBuilder r = Response.ok();
+				return r.type(MediaType.APPLICATION_JSON_TYPE).entity(in).build();
+			} catch (IOException e) {
+				throw new NdexException ("Interactome service can't find file: " + e.getMessage());
+			}
+			
+		} 
+		 throw new ObjectNotFoundException("This search has no result ready. Search status: " + status.getStatus());
 
 	}
 	
@@ -262,7 +292,5 @@ public class MessageResource {
 		Files.createDirectories(path);
 		return true;
 	}
-	
-	private static String URLPrefix = "http://localhost";
-  
+	  
 }	

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 import org.junit.Test;
+import org.ndexbio.interactomesearch.GeneSymolIndexer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 

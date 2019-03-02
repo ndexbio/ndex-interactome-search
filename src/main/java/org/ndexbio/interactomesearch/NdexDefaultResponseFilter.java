@@ -64,7 +64,7 @@ public class CrossOriginResourceSharingFilter implements Filter
     {
     }
 }*/
-package org.ndexbio;
+package org.ndexbio.interactomesearch;
 
 import java.io.IOException;
 import java.lang.reflect.Method;

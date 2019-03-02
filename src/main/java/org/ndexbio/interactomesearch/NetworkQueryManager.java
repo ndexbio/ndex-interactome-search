@@ -1,4 +1,4 @@
-package org.ndexbio;
+package org.ndexbio.interactomesearch;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -42,6 +44,9 @@ import org.ndexbio.model.cx.SupportElement;
 import org.ndexbio.model.exceptions.NdexException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 public class NetworkQueryManager {
 
@@ -52,6 +57,7 @@ public class NetworkQueryManager {
 //	private String netId;
 	private static final Long consistencyGrp = Long.valueOf(1L);
 	private static final String mdeVer = "1.0";
+	private static final String PROGRESS = "progress";
 	
 	private static String pathPrefix = "/opt/ndex/data/";
 /*	private boolean usingOldVisualPropertyAspect;
@@ -78,8 +84,10 @@ public class NetworkQueryManager {
 	
 	//public static void setFsPath(String workingDir) {fsPath = workingDir;}
 	
-	public void search(Collection<String> genes, UUID taskId) throws SQLException, IOException, NdexException {
-		
+	public void search(List<String> genes, UUID taskId) throws SQLException, IOException, NdexException {
+
+		long t1 = Calendar.getInstance().getTimeInMillis();
+
 		GeneSymbolSearchResult r = symbolDB.search(genes);
 		
 		//new File( fsPath + taskId + "/_tmp").mkdirs();
@@ -91,6 +99,9 @@ public class NetworkQueryManager {
 
         float counter = 0 ;
         int total = r.getResultSet().size();
+        
+        List<InteractomeSearchResult> resultList = new ArrayList<>(total);
+        
         for (Map.Entry<Integer, GeneQueryNodes> e: r.getResultSet().entrySet()) {
 
 			String netUUIDStr = symbolDB.getUUIDFromNetId(e.getKey());
@@ -100,16 +111,52 @@ public class NetworkQueryManager {
 
 			Hashtable<String,Object> status = new Hashtable<>();
 			status.put("status",  SearchStatus.processing);
-			st.getResults().put(netUUIDStr,status);
+			status.put(PROGRESS, 0);
+			st.getSources().put(netUUIDStr,status);
 
 			//neighbourhoodQuery(taskId, e.getKey(), e.getValue().getNodes(), genes);
-			this.directQuery(taskId, netUUIDStr, e.getValue().getNodes(), genes);
+			resultList.add(directQuery(taskId, netUUIDStr, e.getValue().getNodes(), genes, status));
 			
 			//update the status record	
+			status.put(PROGRESS, 100);
 			status.put("status",  SearchStatus.complete);
 			counter += 1.0;
 	        st.setProgress(Math.round(counter*100/total));
 		}
+        
+        //TODO: sort the results and then write out to file.
+        
+        Collections.sort(resultList, new Comparator<InteractomeSearchResult>() {
+            @Override
+            public int compare(InteractomeSearchResult h1, InteractomeSearchResult h2) {
+            	
+            	// sorting by score. value = edgeCount*2 + nodeCount
+            	int s1 = h1.getSummary().getEdgeCount() *2 + h2.getSummary().getNodeCount();
+            	int s2 = h2.getSummary().getEdgeCount() *2 + h2.getSummary().getNodeCount();
+            	
+            	if (s1>s2) return -1;
+            	if (s1 < s2 ) return 1;
+            	if (s1 == s2) {
+            		if (h1.getSummary().getParentEdgeCount() > h2.getSummary().getParentEdgeCount() ) 
+            			return -1;
+            		if (h1.getSummary().getParentEdgeCount() < h2.getSummary().getParentEdgeCount() ) 
+            		    return 1;
+            	}
+        		return 0;            	
+            }
+        });
+        
+        int i = 1 ;
+        for (InteractomeSearchResult ele : resultList ) {
+        	ele.setRank(i++);
+        }
+        
+		String resultFileName = App.getWorkingPath() + "/result/" + taskId.toString() + "/result";
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectWriter writer = mapper.writer(new DefaultPrettyPrinter());
+		writer.writeValue(new File(resultFileName), resultList);	
+		
+		st.setWallTime(Calendar.getInstance().getTimeInMillis() - t1);
 		st.setProgress(100);
 		st.setStatus(SearchStatus.complete);
 	}
@@ -123,7 +170,8 @@ public class NetworkQueryManager {
 	 * @throws IOException
 	 * @throws NdexException
 	 */
-	private void neighbourhoodQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, Collection<String> genes) throws IOException, NdexException {
+	// comment out for now, but don't remove this. We might need this as an alternative search function in the future.
+/*	private void neighbourhoodQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, Collection<String> genes) throws IOException, NdexException {
 		long t1 = Calendar.getInstance().getTimeInMillis();
 		Set<Long> edgeIds = new TreeSet<> ();
 		
@@ -245,13 +293,22 @@ public class NetworkQueryManager {
 
 		accLogger.info("Total " + (t2-t1)/1000f + " seconds. Returned " + edgeIds.size() + " edges and " + newNodeIds.size() + " nodes.",
 				new Object[]{});
-	}
+	} */
 
 	
-	private void directQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, Collection<String> genes) throws IOException, NdexException {
+	private static InteractomeSearchResult directQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
+			Hashtable<String,Object> status) throws IOException, NdexException {
 		long t1 = Calendar.getInstance().getTimeInMillis();
 		Set<Long> edgeIds = new TreeSet<> ();
 		
+		InteractomeSearchResult currentResult = new  InteractomeSearchResult();
+		currentResult.setNetworkUUID(netUUIDStr);
+		currentResult.setHitGenes(genes);
+		InteractomeResultNetworkSummary s = new InteractomeResultNetworkSummary();
+		currentResult.setSummary(s);
+		s.setParentEdgeCount(App.getDBTable().get(netUUIDStr).getEdgeCount());
+		s.setParentNodeCount(App.getDBTable().get(netUUIDStr).getNodeCount());
+		s.setNodeCount(nodeIds.size());
 		
 		String tmpFileName = App.getWorkingPath() + "/result/" + taskId.toString() + "/tmp_" + netUUIDStr;
 		
@@ -286,6 +343,8 @@ public class NetworkQueryManager {
 				postmd.add(mde1);
 			}
 			
+			status.put(PROGRESS, 15);
+			
 			//write edges
 			if (md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
 				writer.startAspectFragment(EdgesElement.ASPECT_NAME);
@@ -313,12 +372,13 @@ public class NetworkQueryManager {
 			
 			}
 	
-			if  (edgeIds.size()>0) {
-				MetaDataElement mde = new MetaDataElement(EdgesElement.ASPECT_NAME,mdeVer);
-				mde.setElementCount((long)edgeIds.size());
-				mde.setIdCounter(edgeIds.isEmpty()? 0L : Collections.max(edgeIds));
-				postmd.add(mde);
-			}
+			MetaDataElement mde = new MetaDataElement(EdgesElement.ASPECT_NAME,mdeVer);
+			mde.setElementCount((long)edgeIds.size());
+			mde.setIdCounter(edgeIds.isEmpty()? 0L : Collections.max(edgeIds));
+			postmd.add(mde);
+
+			status.put(PROGRESS, 40);
+			s.setEdgeCount(edgeIds.size());
 
 			ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<> (2);
 			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasDerivedFrom", netUUIDStr));
@@ -329,6 +389,7 @@ public class NetworkQueryManager {
 			writeOtherAspectsForSubnetwork(netUUIDStr, nodeIds, edgeIds, writer, md, postmd,
 				"Interactome query result on network" , provenanceRecords, nodeIds);
 		
+			status.put(PROGRESS, 95);
 			writer.writeMetadata(postmd);
 			writer.end();
 		}
@@ -339,9 +400,11 @@ public class NetworkQueryManager {
 		Files.move(src, tgt, StandardCopyOption.ATOMIC_MOVE); 				
 		
 		long t2 = Calendar.getInstance().getTimeInMillis();
-
+        status.put("wallTime", Long.valueOf(t2-t1));
 		accLogger.info("Total " + (t2-t1)/1000f + " seconds. Returned " + edgeIds.size() + " edges and " + nodeIds.size() + " nodes.",
 				new Object[]{});
+		
+		return currentResult;
 	}
 	
 	

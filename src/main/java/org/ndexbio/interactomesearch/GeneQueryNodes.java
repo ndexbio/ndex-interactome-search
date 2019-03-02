@@ -1,4 +1,4 @@
-package org.ndexbio;
+package org.ndexbio.interactomesearch;
 
 import java.util.Set;
 import java.util.TreeSet;

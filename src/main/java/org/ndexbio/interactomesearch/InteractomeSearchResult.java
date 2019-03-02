@@ -1,5 +1,6 @@
 package org.ndexbio.interactomesearch;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -13,6 +14,8 @@ public class InteractomeSearchResult {
 	private String networkUUID;
 
 	public InteractomeSearchResult() {
+		summary = new InteractomeResultNetworkSummary();
+		hitGenes = new ArrayList<>(50);
 	}
 
 	public int getRank() {

@@ -1,4 +1,4 @@
-package org.ndexbio;
+package org.ndexbio.interactomesearch;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,11 +28,11 @@ public class SearchStatus {
 	private int size;
 	private Set<String> query;
 	
-	private Hashtable<String, Map<String, Object>> results;
+	private Hashtable<String, Map<String, Object>> sources;
     
 	public SearchStatus() {
 		setQuery(new TreeSet<>());
-		setResults(new Hashtable<>(60));
+		setSources(new Hashtable<>(60));
 		progress  = 0;
 		wallTime = 0;
 	}
@@ -101,12 +101,12 @@ public class SearchStatus {
 		this.query = query;
 	}
 
-	public Hashtable<String,Map<String, Object>> getResults() {
-		return results;
+	public Hashtable<String,Map<String, Object>> getSources() {
+		return sources;
 	}
 
-	public void setResults(Hashtable<String,Map<String, Object>> sources) {
-		this.results = sources;
+	public void setSources (Hashtable<String,Map<String, Object>> sources) {
+		this.sources = sources;
 	}
 	
 	
