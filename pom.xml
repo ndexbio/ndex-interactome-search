@@ -15,7 +15,7 @@
 		<resteasy.version>3.1.4.Final</resteasy.version>
 		<junit.version>4.11</junit.version>
 		<servlet-api.version>4.0.0</servlet-api.version>
-		<jetty.version>9.4.8.v20171121</jetty.version>
+		<jetty.version>9.4.15.v20190215</jetty.version>
 
 		<maven-shade-plugin.version>3.1.0</maven-shade-plugin.version>
 		<maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
@@ -63,7 +63,7 @@
 		<dependency>
 			<groupId>org.ndexbio.client</groupId>
 			<artifactId>ndex-java-client</artifactId>
-			<version>2.4.0</version>
+			<version>2.4.1</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>

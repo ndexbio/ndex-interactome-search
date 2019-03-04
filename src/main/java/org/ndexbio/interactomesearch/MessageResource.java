@@ -1,17 +1,13 @@
 package org.ndexbio.interactomesearch;
 
-import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
@@ -19,8 +15,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -28,18 +22,15 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+import org.ndexbio.interactomesearch.object.InteractomeRefNetworkEntry;
+import org.ndexbio.interactomesearch.object.NetworkShortSummary;
+import org.ndexbio.interactomesearch.object.SearchStatus;
 import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
-import org.ndexbio.model.object.network.NetworkSummary;
-import org.ndexbio.rest.client.NdexRestClient;
-import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 
 @Path("/v1")
@@ -58,13 +49,13 @@ public class MessageResource {
   
   
  
-  
+  /*
 	@POST
 	@Path("/mytest")
 	@Produces("application/json")
 	@Consumes(MediaType.APPLICATION_JSON)
 
-    public String mytest (@Context HttpServletRequest request/*, InputStream in*/) throws IOException {
+    public String mytest (@Context HttpServletRequest request) throws IOException {
 	   String contentType = request.getContentType();
 	   ServletInputStream in = request.getInputStream();
 	   
@@ -76,7 +67,7 @@ public class MessageResource {
 	   }
 	   return "abc";
 	}
-  
+   */
 	
 	@POST
 	@Path("/search")
@@ -116,20 +107,20 @@ public class MessageResource {
 	@Path("/database")
 	@Produces("application/json")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response getDatabase() throws NdexException, JsonProcessingException, IOException {
+	public List<InteractomeRefNetworkEntry> getDatabase() {
 		
-		List<Map<String, String>> sources = new ArrayList<>(App.getDBTable().size()); 
+		List<InteractomeRefNetworkEntry> sources = new ArrayList<>(App.getDBTable().size()); 
 	
 		for ( Map.Entry<String, NetworkShortSummary> entry: App.getDBTable().entrySet()) {
-        	HashMap<String,String> rec = new HashMap<>();
-        	rec.put("uuid", entry.getKey());
-        	rec.put("description",entry.getValue().getDescription());
-        	rec.put("name", entry.getValue().getName());
-        	rec.put("url", entry.getValue().getURL() );
+			InteractomeRefNetworkEntry rec = new InteractomeRefNetworkEntry();
+        	rec.setUuid(entry.getKey());
+        	rec.setDescription(entry.getValue().getDescription());
+        	rec.setName( entry.getValue().getName());
+        	rec.setURL( entry.getValue().getURL() );
         	sources.add(rec);
         }
 		
-		return Response.ok(sources).build();
+		return sources;
 
 	}
 	
@@ -173,7 +164,7 @@ public class MessageResource {
 	@Path("/search/{id}/status")
 	@Produces("application/json")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response  getSearchStatus(
+	public SearchStatus  getSearchStatus(
 			@PathParam("id")final String taskIdStr
 			) throws NdexException {
 		
@@ -185,7 +176,7 @@ public class MessageResource {
 		if (status == null ) 
 			throw new ObjectNotFoundException("Can't find task " + taskIdStr);
 			
-		return Response.ok(status).build();
+		return status;
 
 	}
 	
@@ -205,7 +196,6 @@ public class MessageResource {
 				NetworkQueryManager b = new NetworkQueryManager();
 				b.search(geneList, taskId);
 			} catch ( SQLException | IOException | NdexException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				SearchStatus status = App.getStatusTable().get(taskId);
 				status.setStatus(SearchStatus.failed);

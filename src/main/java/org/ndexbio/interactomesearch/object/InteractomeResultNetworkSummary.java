@@ -1,4 +1,4 @@
-package org.ndexbio.interactomesearch;
+package org.ndexbio.interactomesearch.object;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

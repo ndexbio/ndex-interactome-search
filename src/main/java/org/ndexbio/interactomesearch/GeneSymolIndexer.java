@@ -18,6 +18,7 @@ import org.h2.jdbcx.JdbcConnectionPool;
 import org.ndexbio.cxio.aspects.datamodels.NodeAttributesElement;
 import org.ndexbio.cxio.aspects.datamodels.NodesElement;
 import org.ndexbio.cxio.core.AspectIterator;
+import org.ndexbio.interactomesearch.object.GeneSymbolSearchResult;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 

@@ -9,8 +9,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
-import org.ndexbio.interactomesearch.GeneSymbolSearchResult;
 import org.ndexbio.interactomesearch.GeneSymolIndexer;
+import org.ndexbio.interactomesearch.object.GeneSymbolSearchResult;
 
 public class DBQueryTests {
 
