@@ -70,7 +70,7 @@ public class NetworkQueryManager {
 	private boolean errorOverLimit;
 	private boolean directOnly;
 	private String searchTerms; */
-	private GeneSymolIndexer symbolDB;
+	private GeneSymbolIndexer symbolDB;
 	
 	//private static String fsPath;
 	

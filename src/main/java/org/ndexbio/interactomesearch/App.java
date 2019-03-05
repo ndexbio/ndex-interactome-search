@@ -35,7 +35,7 @@ public class App
 	 static final String APPLICATION_PATH = "/interactome";
 	 static final String CONTEXT_ROOT = "/";
 	 private static String ndexServerName;   //Ndex server host which has these interactome networks
-	 private static GeneSymolIndexer geneSearcher;
+	 private static GeneSymbolIndexer geneSearcher;
 	 private static String workingPath;  // working directory of this service.
 	 private static String serviceHost;  // host name of this service
 	 private static int port;    //service port.
@@ -51,7 +51,7 @@ public class App
 
 	  public static Hashtable<UUID,SearchStatus> getStatusTable() { return statusTable;}
 	  //public static String getHostName() { return ndexServerName;}
-	  public static GeneSymolIndexer getGeneSearcher() { return geneSearcher;}
+	  public static GeneSymbolIndexer getGeneSearcher() { return geneSearcher;}
 	  public static String getWorkingPath() {return workingPath;}
 	  public static String getServiceHost() {return serviceHost;}
 	  public static int getPort() { return port;}
@@ -96,7 +96,7 @@ public class App
 	    port = Integer.valueOf(portStr).intValue();
 		ndexServerName = System.getProperty("ndex.host", "public.ndexbio.org");
 		workingPath = System.getProperty("ndex.interactomedb", "/opt/ndex/services/interactome");
-		geneSearcher = new GeneSymolIndexer(workingPath + "/genedb");
+		geneSearcher = new GeneSymbolIndexer(workingPath + "/genedb");
 		serviceHost = System.getProperty("ndex.interactomehost", "localhost");
 
 		//remove the old results first
@@ -114,7 +114,7 @@ public class App
         	rec.setDescription(summary.getDescription());
         	rec.setEdgeCount(summary.getEdgeCount());
         	rec.setNodeCount(summary.getNodeCount());
-        	rec.setURL("http://"+ndexServerName+"/v2/network/"+ summary.getExternalId() );
+        	rec.setURL(ndexServerName+"/v2/network/"+ summary.getExternalId() );
         	dbTable.put(summary.getExternalId().toString(),rec);
         }
 		

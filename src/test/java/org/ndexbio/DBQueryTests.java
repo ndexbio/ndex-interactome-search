@@ -9,14 +9,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
-import org.ndexbio.interactomesearch.GeneSymolIndexer;
+import org.ndexbio.interactomesearch.GeneSymbolIndexer;
 import org.ndexbio.interactomesearch.object.GeneSymbolSearchResult;
 
 public class DBQueryTests {
 
 	@Test
 	public void test() throws SQLException {
-		GeneSymolIndexer db = new GeneSymolIndexer("/opt/ndex/services/interactome/genedb");
+		GeneSymbolIndexer db = new GeneSymbolIndexer("/opt/ndex/services/interactome/genedb");
 		
 		String[] myArray = { "GAB1", "FOS", "SRF", "AATF", "AKT1", "FOOOO", "BARRR" };
 		List<String> mylist = Arrays.asList(myArray);

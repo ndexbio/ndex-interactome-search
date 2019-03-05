@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.util.UUID;
 
 import org.junit.Test;
-import org.ndexbio.interactomesearch.GeneSymolIndexer;
+import org.ndexbio.interactomesearch.GeneSymbolIndexer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -17,7 +17,7 @@ public class DBTests {
 	public void test() throws SQLException, JsonProcessingException, IOException {
 		
 		//tryout the implementation.
-		GeneSymolIndexer db = new GeneSymolIndexer("/opt/ndex/services/interactome/genedb" );
+		GeneSymbolIndexer db = new GeneSymbolIndexer("/opt/ndex/services/interactome/genedb" );
 		
 		db.rebuildIndex(UUID.fromString("3c1bdc9e-2be3-11e9-ad04-52495394a1cd"));
 			

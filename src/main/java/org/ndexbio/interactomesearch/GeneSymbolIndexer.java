@@ -23,7 +23,7 @@ import org.ndexbio.interactomesearch.object.GeneSymbolSearchResult;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-public class GeneSymolIndexer {
+public class GeneSymbolIndexer {
 	
 	//static final String DB_URL = "jdbc:h2:~/test";  
 	
@@ -33,7 +33,7 @@ public class GeneSymolIndexer {
 	
 	private  TreeMap<Integer, String> netIdMapper;
 	   
-	public GeneSymolIndexer(String dbpath) throws SQLException {
+	public GeneSymbolIndexer(String dbpath) throws SQLException {
 		netIdMapper = new TreeMap<>();
 		cp = JdbcConnectionPool.create("jdbc:h2:" + dbpath, "sa", "sa");
 	    try ( Connection conn = cp.getConnection()) {
@@ -78,7 +78,7 @@ public class GeneSymolIndexer {
 		try ( Connection conn = cp.getConnection()) {
 	        
 	        conn.createStatement().execute("insert into networks (net_uuid) values('"+networkUUID+"')");
-	        
+	        conn.commit();
 	        try (ResultSet r = conn.createStatement().executeQuery("select net_id from networks where net_uuid='"+networkUUID+"'")) {
 	        	if ( r.next()) {
 	        		net_id = r.getInt(1);
@@ -86,6 +86,7 @@ public class GeneSymolIndexer {
 	        		throw new SQLException ("Can't get net_id after insert an new network entry in networks table.");
 	        	}
 	        }
+	        System.out.println("Network " + networkUUID + " is added to net_id table.");
 		}    
 	    
 		/* 
@@ -128,7 +129,8 @@ public class GeneSymolIndexer {
 	    } catch (FileNotFoundException e) {
 	    	// ignore this aspect if nodes have no attributes on them.
 	    }
-	        	
+
+	    int count = 0;
 	    // now create the index
 	    try ( Connection conn = cp.getConnection()) {
 	    	for(Map.Entry<Long, HashMap<String,Object>> e : nodeTable.entrySet()) {
@@ -137,12 +139,14 @@ public class GeneSymolIndexer {
 	    		if ( o == null || o.equals("protein") || o.equals("gene")) {
 	    			String geneSymbol = (String)n.get("n");
 	    			if ( geneSymbol != null) {
-	    				insertGeneSymbol (conn, geneSymbol, e.getKey(), net_id);		
+	    				insertGeneSymbol (conn, geneSymbol, e.getKey(), net_id);
+	    				count++;
 	    			}
 	    		} else if (o.equals("proteinfamily") || o.equals("complex")) {
 	    			List<String> geneList = (List<String>)n.get("m");
 	    			for ( String g : geneList) {
 	    				insertGeneSymbol(conn, g, e.getKey(), net_id);	
+	    				count++;
 	    			}
 	    		}
 	    	}
@@ -150,6 +154,7 @@ public class GeneSymolIndexer {
 	    }
 	    
 	    netIdMapper.put(net_id,networkUUID.toString());
+	    System.out.println (count + " genes indexed. Done.");
 	}
 	
 	private static void insertGeneSymbol(Connection conn, String gene,Long nodeId, int netId) throws SQLException {
@@ -207,15 +212,16 @@ public class GeneSymolIndexer {
 	
 	public static void main(String... args) throws Exception {
 		
-		if ( args.length != 3 ) {
+		if ( args.length == 3 ) {
+			GeneSymbolIndexer db = new GeneSymbolIndexer(args[0]);
+			db.setPathPrefix(args[1]);
+			db.rebuildIndex(UUID.fromString(args[2]));
+			db.shutdown();
+		} else {
 			System.out.println ("Rebuild Index of a network GeneSymbolIndexer <db_path> <network_file_prefix> networkUUID");
-			System.out.println ("Example: GeneSymbolIndexer /opt/ndex/services/interactome/genedb /opt/ndex/data/ xxx-xxxxx-xxxxx");			
-		}
+			System.out.println ("Example: GeneSymbolIndexer /opt/ndex/services/interactome/genedb /opt/ndex/data/ xxx-xxxxx-xxxxx");	
 		
-		GeneSymolIndexer db = new GeneSymolIndexer(args[0]);
-		db.setPathPrefix(args[1]);
-		db.rebuildIndex(UUID.fromString(args[2]));
-        db.shutdown();
+		}
     }
 	
 	private static String concatenateGenes(Collection<String> genes) {
