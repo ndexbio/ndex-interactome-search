@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.ndexbio.cxio.aspects.datamodels.NodeAttributesElement;
@@ -28,7 +29,7 @@ public class GeneSymolIndexer {
 	
 	private JdbcConnectionPool cp;
 	
-	private static String pathPrefix;
+	private  String pathPrefix;
 	
 	private  TreeMap<Integer, String> netIdMapper;
 	   
@@ -54,6 +55,8 @@ public class GeneSymolIndexer {
 	    
 	}
 	
+	private void setPathPrefix(String pathPrefix) { this.pathPrefix = pathPrefix;}
+	
 	public void shutdown() {
 		cp.dispose();
 	}
@@ -65,7 +68,7 @@ public class GeneSymolIndexer {
 		return netIdMapper.values();
 	}
 	
-	public void rebuildIndex(String networkUUID) throws SQLException, JsonProcessingException, IOException {
+	public void rebuildIndex(UUID networkUUID) throws SQLException, JsonProcessingException, IOException {
 		
 		System.out.println("Rebuild Index on network " + networkUUID);
 		
@@ -93,8 +96,9 @@ public class GeneSymolIndexer {
 	     *    "m" -- member, a list of gene symbol, only exists when the type is complex or proteinfamily.
 	     */
 	    TreeMap<Long, HashMap<String,Object>> nodeTable = new TreeMap<> ();
+	    String netIDStr = networkUUID.toString();
 	        	
-	    try (AspectIterator<NodesElement> ni = new AspectIterator<>( networkUUID,NodesElement.ASPECT_NAME, NodesElement.class, pathPrefix))  {
+	    try (AspectIterator<NodesElement> ni = new AspectIterator<>( netIDStr,NodesElement.ASPECT_NAME, NodesElement.class, pathPrefix))  {
 			while (ni.hasNext()) {
 				NodesElement node = ni.next();
                 HashMap<String,Object> n = new HashMap<>();
@@ -103,7 +107,7 @@ public class GeneSymolIndexer {
 			}
 	    }
 	        	
-	    try (AspectIterator<NodeAttributesElement> ni = new AspectIterator<>( networkUUID,NodeAttributesElement.ASPECT_NAME,
+	    try (AspectIterator<NodeAttributesElement> ni = new AspectIterator<>( netIDStr,NodeAttributesElement.ASPECT_NAME,
 	        			     NodeAttributesElement.class, pathPrefix))  {
 			while (ni.hasNext()) {
 				NodeAttributesElement attr = ni.next();
@@ -145,7 +149,7 @@ public class GeneSymolIndexer {
 	    	conn.commit();
 	    }
 	    
-	    netIdMapper.put(net_id,networkUUID);
+	    netIdMapper.put(net_id,networkUUID.toString());
 	}
 	
 	private static void insertGeneSymbol(Connection conn, String gene,Long nodeId, int netId) throws SQLException {
@@ -163,7 +167,7 @@ public class GeneSymolIndexer {
 		}			
 	}
 	
-	public void removeIndex(String networkUUID) throws SQLException {
+	public void removeIndex(UUID networkUUID) throws SQLException {
 		try ( Connection conn = cp.getConnection()) {
 	        conn.createStatement().execute("delete from genesymbols where net_id =(select net_id from networks where net_uuid='"+networkUUID+"')");
 	        
@@ -203,7 +207,14 @@ public class GeneSymolIndexer {
 	
 	public static void main(String... args) throws Exception {
 		
-		GeneSymolIndexer db = new GeneSymolIndexer("~/interactome_genes");
+		if ( args.length != 3 ) {
+			System.out.println ("Rebuild Index of a network GeneSymbolIndexer <db_path> <network_file_prefix> networkUUID");
+			System.out.println ("Example: GeneSymbolIndexer /opt/ndex/services/interactome/genedb /opt/ndex/data/ xxx-xxxxx-xxxxx");			
+		}
+		
+		GeneSymolIndexer db = new GeneSymolIndexer(args[0]);
+		db.setPathPrefix(args[1]);
+		db.rebuildIndex(UUID.fromString(args[2]));
         db.shutdown();
     }
 	

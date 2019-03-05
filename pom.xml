@@ -3,11 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.ndexbio</groupId>
-	<artifactId>ndex-neighborhoodquery</artifactId>
-	<version>1.1</version>
+	<artifactId>ndex-interactome-search</artifactId>
+	<version>0.1.0</version>
 	<packaging>jar</packaging>
 
-	<name>ndex-neighborhoodquery</name>
+	<name>ndex-interactome-search</name>
 	<url>http://maven.apache.org</url>
 
 	<properties>
@@ -79,7 +79,7 @@
 
 
 	<build>
-		<finalName>app-${project.version}</finalName>
+		<finalName>interactomeSearch-${project.version}</finalName>
 		<plugins>
 
 			<plugin>
@@ -117,7 +117,7 @@
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 									<mainClass>
-										org.ndexbio.App
+										org.ndexbio.interactomesearch.App
 									</mainClass>
 								</transformer>
 							</transformers>
