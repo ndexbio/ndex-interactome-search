@@ -135,7 +135,7 @@ public class GeneSymbolIndexer {
 	    try ( Connection conn = cp.getConnection()) {
 	    	for(Map.Entry<Long, HashMap<String,Object>> e : nodeTable.entrySet()) {
 	    		HashMap<String, Object> n = e.getValue();
-	    		String o = (String)n.get("t"); 
+	    		String o = ((String)n.get("t")).toLowerCase(); 
 	    		if ( o == null || o.equals("protein") || o.equals("gene")) {
 	    			String geneSymbol = (String)n.get("n");
 	    			if ( geneSymbol != null) {
@@ -166,7 +166,7 @@ public class GeneSymbolIndexer {
 		}
 		String sqlStr = "insert into genesymbols (SYMBOL, node_id, net_id) values (?, ?,"+netId + ")";
 		try (PreparedStatement pst = conn.prepareStatement(sqlStr)) {
-			pst.setString(1, gene);
+			pst.setString(1, gene.toUpperCase());
 			pst.setLong(2, nodeId);
 			pst.executeUpdate();
 		}			
@@ -189,7 +189,7 @@ public class GeneSymbolIndexer {
 	public GeneSymbolSearchResult search(Collection<String> genes) throws SQLException {
 		
 		GeneSymbolSearchResult r = new GeneSymbolSearchResult();
-		r.initializeResultSet(netIdMapper);
+		//r.initializeResultSet(netIdMapper);
 		String sqlStr = " select symbol,node_id,net_id from GENESYMBOLS n where symbol in("+ concatenateGenes(genes) + ")";
 		
 		try ( Connection conn = cp.getConnection()) {

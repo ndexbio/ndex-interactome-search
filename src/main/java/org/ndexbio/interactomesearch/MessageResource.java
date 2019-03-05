@@ -79,7 +79,8 @@ public class MessageResource {
 		
 		//Log.getRootLogger().info("Interconnect Query term: " + queryParameters.getSearchString());
 
-		UUID taskId = UUID.nameUUIDFromBytes(geneList.stream().
+		List<String> uppercasedList = geneList.stream().map(e -> e.toUpperCase()).collect(Collectors.toList());
+		UUID taskId = UUID.nameUUIDFromBytes(uppercasedList.stream().
 				collect(Collectors.joining(",")).getBytes());
 		
 		java.nio.file.Path path =  Paths.get(App.getWorkingPath() + "/result/" + taskId.toString());
@@ -91,7 +92,7 @@ public class MessageResource {
 		  st.setStatus(SearchStatus.submitted);
 		  
 		  //kick start the search.	
-		  SearchWorkerThread t = new SearchWorkerThread(geneList, taskId);
+		  SearchWorkerThread t = new SearchWorkerThread(uppercasedList, taskId);
 		  t.start();
 		}	
 		String url = "http://"+App.getServiceHost()  +":"+App.getPort() + "/interactome/v1/search/" + taskId + "/status";

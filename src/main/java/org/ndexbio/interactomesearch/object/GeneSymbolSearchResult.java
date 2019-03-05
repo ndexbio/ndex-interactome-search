@@ -37,9 +37,9 @@ public class GeneSymbolSearchResult {
     	idMapper.forEach((k,v) -> resultSet.put(k,new GeneQueryNodes()));
     } */
 	
-	public void initializeResultSet(Map<Integer, String> idMapper) {
+	/*(public void initializeResultSet(Map<Integer, String> idMapper) {
     	idMapper.forEach((k,v) -> resultSet.put(k,new GeneQueryNodes()));
-	}
+	}*/
 
 	public Set<String> getHitGenes() {
 		return hitGenes;
@@ -56,7 +56,12 @@ public class GeneSymbolSearchResult {
 	
 	public void addGeneNode(String gene,long nodeId, int netId) {
 		hitGenes.add(gene);
-		GeneQueryNodes nodes = resultSet.get(netId);
+		Integer iId = Integer.valueOf(netId);
+		GeneQueryNodes nodes = resultSet.get(iId);
+		if ( nodes == null) {
+			nodes = new GeneQueryNodes();
+			resultSet.put(iId, nodes);
+		}	
 		nodes.getHitGenes().add(gene);
 		nodes.getNodes().add(nodeId);
 	}

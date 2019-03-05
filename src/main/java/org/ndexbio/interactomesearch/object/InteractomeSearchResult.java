@@ -2,6 +2,8 @@ package org.ndexbio.interactomesearch.object;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -9,13 +11,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 public class InteractomeSearchResult {
 	private int rank;
-	private List<String> hitGenes;
+	private Set<String> hitGenes;
 	private InteractomeResultNetworkSummary summary;
 	private String networkUUID;
 
 	public InteractomeSearchResult() {
 		summary = new InteractomeResultNetworkSummary();
-		hitGenes = new ArrayList<>(50);
+		hitGenes = new TreeSet<>();
 	}
 
 	public int getRank() {
@@ -26,11 +28,11 @@ public class InteractomeSearchResult {
 		this.rank = rank;
 	}
 
-	public List<String> getHitGenes() {
+	public Set<String> getHitGenes() {
 		return hitGenes;
 	}
 
-	public void setHitGenes(List<String> hitGenes) {
+	public void setHitGenes(Set<String> hitGenes) {
 		this.hitGenes = hitGenes;
 	}
 

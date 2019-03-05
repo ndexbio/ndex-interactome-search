@@ -2,6 +2,7 @@ package org.ndexbio.interactomesearch.object;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -26,13 +27,15 @@ public class SearchStatus {
 	private int numberOfHits;
 	private int start;
 	private int size;
-	private Set<String> query;
+	private List<String> query;
+	private Set<String> hitGenes;
 	
 	private Hashtable<String, Map<String, Object>> sources;
     
 	public SearchStatus() {
-		setQuery(new TreeSet<>());
+		setQuery(new ArrayList<>(50));
 		setSources(new Hashtable<>(60));
+		setHitGenes(new HashSet<>(20));
 		progress  = 0;
 		wallTime = 0;
 	}
@@ -93,11 +96,11 @@ public class SearchStatus {
 		this.size = size;
 	}
 
-	public Set<String> getQuery() {
+	public List<String> getQuery() {
 		return query;
 	}
 
-	public void setQuery(Set<String> query) {
+	public void setQuery(List<String> query) {
 		this.query = query;
 	}
 
@@ -107,6 +110,14 @@ public class SearchStatus {
 
 	public void setSources (Hashtable<String,Map<String, Object>> sources) {
 		this.sources = sources;
+	}
+
+	public Set<String> getHitGenes() {
+		return hitGenes;
+	}
+
+	public void setHitGenes(Set<String> hitGenes) {
+		this.hitGenes = hitGenes;
 	}
 	
 	

@@ -100,7 +100,8 @@ public class NetworkQueryManager {
 		SearchStatus st = App.getStatusTable().get(taskId);
 		st.setStatus(SearchStatus.processing);
         st.setNumberOfHits(r.getResultSet().size());
-        st.setQuery(r.getHitGenes());
+        st.setHitGenes(r.getHitGenes());
+        st.setQuery(genes);
 
         float counter = 0 ;
         int total = r.getResultSet().size();
@@ -119,9 +120,10 @@ public class NetworkQueryManager {
 			status.put(PROGRESS, 0);
 			st.getSources().put(netUUIDStr,status);
 
+			if ( e.getValue().getNodes().size() > 0) {
 			//neighbourhoodQuery(taskId, e.getKey(), e.getValue().getNodes(), genes);
-			resultList.add(directQuery(taskId, netUUIDStr, e.getValue().getNodes(), genes, status));
-			
+				resultList.add(directQuery(taskId, netUUIDStr, e.getValue().getNodes(), genes, status, e.getValue().getHitGenes()));
+			}
 			//update the status record	
 			status.put(PROGRESS, 100);
 			status.put("status",  SearchStatus.complete);
@@ -302,13 +304,13 @@ public class NetworkQueryManager {
 
 	
 	private static InteractomeSearchResult directQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
-			Hashtable<String,Object> status) throws IOException, NdexException {
+			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException, NdexException {
 		long t1 = Calendar.getInstance().getTimeInMillis();
 		Set<Long> edgeIds = new TreeSet<> ();
 		
 		InteractomeSearchResult currentResult = new  InteractomeSearchResult();
 		currentResult.setNetworkUUID(netUUIDStr);
-		currentResult.setHitGenes(genes);
+		currentResult.setHitGenes(hitgenes);
 		InteractomeResultNetworkSummary s = new InteractomeResultNetworkSummary();
 		currentResult.setSummary(s);
 		s.setParentEdgeCount(App.getDBTable().get(netUUIDStr).getEdgeCount());
