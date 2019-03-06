@@ -114,11 +114,14 @@ public class GeneSymbolIndexer {
 				NodeAttributesElement attr = ni.next();
 				if ( attr.getName().equals("type")) {
 					String type = attr.getValue();
-					if ( type.equals("protein") || type.equals("complex") || 
-						 type.equals("gene") || type.equals("proteinfamily")) {
-						nodeTable.get(attr.getPropertyOf()).put("t", type);
-					} else  // remove this node from table if it doesn't have gene symbol on it.
-						nodeTable.remove(attr.getPropertyOf());
+					if ( type != null) {
+						type = type.toLowerCase(); 
+						if ( type.equals("protein") || type.equals("complex") || 
+							type.equals("gene") || type.equals("proteinfamily")) {
+							nodeTable.get(attr.getPropertyOf()).put("t", type);
+						} else  // remove this node from table if it doesn't have gene symbol on it.
+							nodeTable.remove(attr.getPropertyOf());
+					}
 				} else if ( attr.getName().equals("members")) {
 					HashMap<String,Object> n = nodeTable.get(attr.getPropertyOf());
 					if ( n != null) {
@@ -135,7 +138,7 @@ public class GeneSymbolIndexer {
 	    try ( Connection conn = cp.getConnection()) {
 	    	for(Map.Entry<Long, HashMap<String,Object>> e : nodeTable.entrySet()) {
 	    		HashMap<String, Object> n = e.getValue();
-	    		String o = ((String)n.get("t")).toLowerCase(); 
+	    		String o = ((String)n.get("t"));
 	    		if ( o == null || o.equals("protein") || o.equals("gene")) {
 	    			String geneSymbol = (String)n.get("n");
 	    			if ( geneSymbol != null) {
