@@ -20,7 +20,7 @@ public class IneractomeRestClientTest {
 
 	@Test
 	public void test() throws NdexException {
-		IneractomeRestClient client = new IneractomeRestClient("http://localhost:8285/interactome/v1/", null);
+		InteractomeRestClient client = new InteractomeRestClient("http://localhost:8285/interactome/v1/", null);
 		
 	    List<InteractomeRefNetworkEntry> r = client.getDatabase();
 	    
@@ -30,7 +30,7 @@ public class IneractomeRestClientTest {
 
 	@Test
 	public void test1() throws NdexException, IOException {
-		IneractomeRestClient client = new IneractomeRestClient("http://localhost:8285/interactome/v1/", null);
+		InteractomeRestClient client = new InteractomeRestClient("http://localhost:8285/interactome/v1/", null);
 		
 		String[] genes = {"GAB1", "FOS", "SRF", "AATF", "AKT1", "FOOOO", "BARRR"};
 		

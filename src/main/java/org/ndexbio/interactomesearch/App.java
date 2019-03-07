@@ -45,8 +45,6 @@ public class App
 	 // task ID to status table
 	 private static final Hashtable<UUID, SearchStatus> statusTable = new Hashtable<>();  
 	 
-	 
-	  
 	  public App() {}
 
 	  public static Hashtable<UUID,SearchStatus> getStatusTable() { return statusTable;}

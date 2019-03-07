@@ -1,7 +1,6 @@
 package org.ndexbio.interactomesearch.client;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.UUID;
@@ -20,10 +19,7 @@ import org.ndexbio.interactomesearch.object.SearchStatus;
 import org.ndexbio.model.errorcodes.NDExError;
 import org.ndexbio.model.exceptions.NdexException;
 
-public class IneractomeRestClient {
-	 public static final String APPLICATION_JSON = "application/json";
-	 public static final String ACCEPT = "accept";
-	 public static final String CONTENT_TYPE = "Content-Type";
+public class InteractomeRestClient {
 	 private String _restEndPoint;
 	 private String _userAgent = "NDEx-InteractomeClient/0.1.0";
 	 	 
@@ -32,7 +28,7 @@ public class IneractomeRestClient {
 	     * @param restEndPoint Full prefix of all endpoints of the service. Example: "http://localhost:8285/interactome/v1/
 	     * @param userAgent
 	     */
-	    public IneractomeRestClient(final String restEndPoint, final String userAgent) {
+	    public InteractomeRestClient(final String restEndPoint, final String userAgent) {
 	        if (userAgent != null){
 	            _userAgent = _userAgent + " " + userAgent;
 	        }
@@ -52,7 +48,7 @@ public class IneractomeRestClient {
 	        		throw new NdexException(obj.getMessage());
 	        }
 	        
-			List<InteractomeRefNetworkEntry> in = response.readEntity(new GenericType<List<InteractomeRefNetworkEntry>>() {});
+			List<InteractomeRefNetworkEntry> in = response.readEntity(new GenericType<List<InteractomeRefNetworkEntry>>() {/**/});
 			return in;
 	    }
 	    
@@ -67,7 +63,7 @@ public class IneractomeRestClient {
 	        		throw new NdexException(obj.getMessage());
 	        }
 	        
-			Hashtable<String,String> in = response.readEntity(new GenericType<Hashtable<String,String>>() {});
+			Hashtable<String,String> in = response.readEntity(new GenericType<Hashtable<String,String>>() {/**/});
 			return UUID.fromString(in.get("id"));
 
 	    }
@@ -97,7 +93,7 @@ public class IneractomeRestClient {
 	        		throw new NdexException(obj.getMessage());
 	        }
 	        
-	        List<InteractomeSearchResult> in = response.readEntity(new GenericType<List<InteractomeSearchResult>>() {});
+	        List<InteractomeSearchResult> in = response.readEntity(new GenericType<List<InteractomeSearchResult>>() {/**/});
 			return in;
 
 	    }
