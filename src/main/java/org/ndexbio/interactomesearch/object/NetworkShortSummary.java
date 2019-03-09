@@ -7,6 +7,8 @@ public class NetworkShortSummary {
 	private String URL;
 	private int nodeCount;
 	private int edgeCount;
+	private String type;
+	private String uuid;
 	
 	public NetworkShortSummary() {}
 
@@ -48,6 +50,22 @@ public class NetworkShortSummary {
 
 	public void setEdgeCount(int edgeCount) {
 		this.edgeCount = edgeCount;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getUuid() {
+		return uuid;
+	}
+
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
 	}
 	
 	

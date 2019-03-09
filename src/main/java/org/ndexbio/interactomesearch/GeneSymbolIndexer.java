@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -20,6 +19,7 @@ import org.ndexbio.cxio.aspects.datamodels.NodeAttributesElement;
 import org.ndexbio.cxio.aspects.datamodels.NodesElement;
 import org.ndexbio.cxio.core.AspectIterator;
 import org.ndexbio.interactomesearch.object.GeneSymbolSearchResult;
+import org.ndexbio.interactomesearch.object.NetworkShortSummary;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -29,23 +29,26 @@ public class GeneSymbolIndexer {
 	
 	private JdbcConnectionPool cp;
 	
-	private  String pathPrefix;
+	private String pathPrefix;
 	
-	private  TreeMap<Integer, String> netIdMapper;
-	   
+	private TreeMap<Integer, NetworkShortSummary> netIdMapper;
+		   
 	public GeneSymbolIndexer(String dbpath) throws SQLException {
 		netIdMapper = new TreeMap<>();
 		cp = JdbcConnectionPool.create("jdbc:h2:" + dbpath, "sa", "sa");
 	    try ( Connection conn = cp.getConnection()) {
-	        conn.createStatement().execute("CREATE TABLE  IF NOT EXISTS NETWORKS (NET_ID INT auto_increment PRIMARY KEY, NET_UUID VARCHAR(36) UNIQUE)");
-	        conn.createStatement().execute("CREATE TABLE  IF NOT EXISTS GENESYMBOLS (SYMBOL VARCHAR(30),NODE_ID BIGINT, NET_ID INT, "+
+	        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS NETWORKS (NET_ID INT auto_increment PRIMARY KEY, NET_UUID VARCHAR(36) UNIQUE, type varchar(10))");
+	        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS GENESYMBOLS (SYMBOL VARCHAR(30),NODE_ID BIGINT, NET_ID INT, "+
 	                  "PRIMARY KEY (SYMBOL,NODE_ID,NET_ID), FOREIGN KEY(NET_ID) REFERENCES NETWORKS(NET_ID))");
 
 	        // populate the id mapping table
-	        try (PreparedStatement p = conn.prepareStatement("select net_id, net_uuid from networks")) {
+	        try (PreparedStatement p = conn.prepareStatement("select net_id, net_uuid, type from networks")) {
 				try ( ResultSet rs = p.executeQuery()) {
 					while ( rs.next()) {
-					  netIdMapper.put(Integer.valueOf(rs.getInt(1)), rs.getString(2));
+					  NetworkShortSummary summary = new NetworkShortSummary();
+					  summary.setUuid(rs.getString(2));
+					  summary.setType(rs.getString(3));
+					  netIdMapper.put(Integer.valueOf(rs.getInt(1)), summary );
 					}
 				}
 			}
@@ -62,13 +65,25 @@ public class GeneSymbolIndexer {
 	}
 	
 
-	public String getUUIDFromNetId(Integer net_id) { return netIdMapper.get(net_id);}
+	public String getUUIDFromNetId(Integer net_id) { return netIdMapper.get(net_id).getUuid();}
+
+	public NetworkShortSummary getShortSummaryFromNetId(Integer net_id) {return netIdMapper.get(net_id);}
 	
-	public Collection<String> getUUIDsFromDB() {
+	public TreeMap<Integer, NetworkShortSummary> getIdMapper() { return netIdMapper;}
+	
+	/*public Collection<String> getUUIDsFromDB() {
 		return netIdMapper.values();
-	}
+	} */
 	
-	public void rebuildIndex(UUID networkUUID) throws SQLException, JsonProcessingException, IOException {
+	/**
+	 * 
+	 * @param networkUUID
+	 * @param type value 'i' means interaction network. 'a' means protein association network. They will be treated differently in the search.
+	 * @throws SQLException
+	 * @throws JsonProcessingException
+	 * @throws IOException
+	 */
+	public void rebuildIndex(UUID networkUUID, String networkType) throws SQLException, JsonProcessingException, IOException {
 		
 		System.out.println("Rebuild Index on network " + networkUUID);
 		
@@ -77,7 +92,7 @@ public class GeneSymbolIndexer {
         int net_id;
 		try ( Connection conn = cp.getConnection()) {
 	        
-	        conn.createStatement().execute("insert into networks (net_uuid) values('"+networkUUID+"')");
+	        conn.createStatement().execute("insert into networks (net_uuid, type) values('"+networkUUID+"','"+ networkType +  "')");
 	        conn.commit();
 	        try (ResultSet r = conn.createStatement().executeQuery("select net_id from networks where net_uuid='"+networkUUID+"'")) {
 	        	if ( r.next()) {
@@ -156,7 +171,10 @@ public class GeneSymbolIndexer {
 	    	conn.commit();
 	    }
 	    
-	    netIdMapper.put(net_id,networkUUID.toString());
+	    NetworkShortSummary summary = new NetworkShortSummary();
+	    summary.setUuid(networkUUID.toString());
+	    summary.setType(networkType);
+	    netIdMapper.put(net_id,summary);
 	    System.out.println (count + " genes indexed. Done.");
 	}
 	
@@ -182,8 +200,8 @@ public class GeneSymbolIndexer {
 	        conn.createStatement().execute("delete from NETWORKS where NET_UUID ='"+networkUUID+"'");
 	        conn.commit();
 	    }	
-		Optional<Map.Entry<Integer, String>> e =
-				netIdMapper.entrySet().stream().filter( r -> r.getValue().equals(networkUUID)).findFirst();
+		Optional<Map.Entry<Integer, NetworkShortSummary>> e =
+				netIdMapper.entrySet().stream().filter( r -> r.getValue().getUuid().equals(networkUUID)).findFirst();
 		if ( e.isPresent())
 			netIdMapper.remove(e.get().getKey());
 		
@@ -215,11 +233,14 @@ public class GeneSymbolIndexer {
 	
 	public static void main(String... args) throws Exception {
 		
-		if ( args.length == 3 ) {
-			GeneSymbolIndexer db = new GeneSymbolIndexer(args[0]);
-			db.setPathPrefix(args[1]);
-			db.rebuildIndex(UUID.fromString(args[2]));
-			db.shutdown();
+		if ( args.length == 4 ) {
+			if (args[3].equals("i") || args[3].equals("a")) {
+				GeneSymbolIndexer db = new GeneSymbolIndexer(args[0]);
+				db.setPathPrefix(args[1]);
+				db.rebuildIndex(UUID.fromString(args[2]), args[3]);
+				db.shutdown();
+			} else
+				System.out.print("The forth parameter can only be 'i' or 'a'.");
 		} else {
 			System.out.println ("Rebuild Index of a network GeneSymbolIndexer <db_path> <network_file_prefix> networkUUID");
 			System.out.println ("Example: GeneSymbolIndexer /opt/ndex/services/interactome/genedb /opt/ndex/data/ xxx-xxxxx-xxxxx");	

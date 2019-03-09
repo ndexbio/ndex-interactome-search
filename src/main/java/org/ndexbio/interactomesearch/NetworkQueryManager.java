@@ -37,6 +37,7 @@ import org.ndexbio.interactomesearch.object.GeneQueryNodes;
 import org.ndexbio.interactomesearch.object.GeneSymbolSearchResult;
 import org.ndexbio.interactomesearch.object.InteractomeResultNetworkSummary;
 import org.ndexbio.interactomesearch.object.InteractomeSearchResult;
+import org.ndexbio.interactomesearch.object.NetworkShortSummary;
 import org.ndexbio.interactomesearch.object.SearchStatus;
 import org.ndexbio.model.cx.CitationElement;
 import org.ndexbio.model.cx.EdgeCitationLinksElement;
@@ -313,8 +314,11 @@ public class NetworkQueryManager {
 		currentResult.setHitGenes(hitgenes);
 		InteractomeResultNetworkSummary s = new InteractomeResultNetworkSummary();
 		currentResult.setSummary(s);
-		s.setParentEdgeCount(App.getDBTable().get(netUUIDStr).getEdgeCount());
-		s.setParentNodeCount(App.getDBTable().get(netUUIDStr).getNodeCount());
+		NetworkShortSummary summary = App.getDBTable().get(netUUIDStr);
+		s.setParentEdgeCount(summary.getEdgeCount());
+		s.setParentNodeCount(summary.getNodeCount());
+		s.setParentNetworkName(summary.getName());
+		
 		s.setNodeCount(nodeIds.size());
 		
 		String tmpFileName = App.getWorkingPath() + "/result/" + taskId.toString() + "/tmp_" + netUUIDStr;

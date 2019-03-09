@@ -103,8 +103,18 @@ public class App
 		// initialize the table of interactome networks
 		NdexRestClientModelAccessLayer ndex = 
 				new NdexRestClientModelAccessLayer(new NdexRestClient(null, null, ndexServerName));
+		
+		for (NetworkShortSummary summary : App.getGeneSearcher().getIdMapper().values()) {
+			NetworkSummary sum = ndex.getNetworkSummaryById(UUID.fromString(summary.getUuid()));
+			summary.setDescription(sum.getDescription());
+			summary.setEdgeCount(sum.getEdgeCount());
+			summary.setName(sum.getName());
+			summary.setNodeCount(sum.getNodeCount());
+			summary.setURL(ndexServerName+"/v2/network/"+ sum.getExternalId() );
+			dbTable.put(summary.getUuid(), summary);
+		}
 
-        Collection<NetworkSummary> nets = 
+      /*  Collection<NetworkSummary> nets = 
         		ndex.getNetworkSummariesByIds(App.getGeneSearcher().getUUIDsFromDB().stream().map( e -> UUID.fromString(e)).collect(Collectors.toList()));
         for ( NetworkSummary summary : nets) {
         	NetworkShortSummary rec = new NetworkShortSummary();
@@ -114,7 +124,7 @@ public class App
         	rec.setNodeCount(summary.getNodeCount());
         	rec.setURL(ndexServerName+"/v2/network/"+ summary.getExternalId() );
         	dbTable.put(summary.getExternalId().toString(),rec);
-        }
+        }*/
 		
 	    NetworkQueryManager.setDataFilePathPrefix(serverFileRepoPrefix);
 	    final Server server = new Server(port);

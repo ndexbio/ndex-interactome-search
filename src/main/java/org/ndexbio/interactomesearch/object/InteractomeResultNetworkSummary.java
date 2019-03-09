@@ -9,6 +9,7 @@ public class InteractomeResultNetworkSummary {
 	private int nodeCount;
 	private long parentNodeCount;
 	private long parentEdgeCount;
+	private String parentNetworkName;
 	
 	public InteractomeResultNetworkSummary() {}
 
@@ -42,5 +43,13 @@ public class InteractomeResultNetworkSummary {
 
 	public void setParentEdgeCount(long parentEdgeCount) {
 		this.parentEdgeCount = parentEdgeCount;
+	}
+
+	public String getParentNetworkName() {
+		return parentNetworkName;
+	}
+
+	public void setParentNetworkName(String parentNetworkName) {
+		this.parentNetworkName = parentNetworkName;
 	}
 }
