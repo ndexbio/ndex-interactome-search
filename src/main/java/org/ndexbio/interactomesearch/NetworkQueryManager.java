@@ -577,10 +577,6 @@ public class NetworkQueryManager {
 									&& nodeIds.contains(edge.getTarget())) {
 								writer.writeElement(edge);
 								edgeIds.add(edge.getId());
-								if (!nodeIds.contains(edge.getSource()))
-									nodeIds.add(edge.getSource());
-								if ( !nodeIds.contains(edge.getTarget()))
-									nodeIds.add(edge.getTarget());
 						}
 
 					}
@@ -632,7 +628,7 @@ public class NetworkQueryManager {
 			MetaDataCollection md, MetaDataCollection postmd, String networkNamePrefix,
 			Collection<NetworkAttributesElement> extraNetworkAttributes, Set<Long> queryNodeIds) throws IOException, JsonProcessingException {
 		//process node attribute aspect
-		if (md.getMetaDataElement(NodeAttributesElement.ASPECT_NAME) != null) {
+		if (nodeIds.size() > 0 || md.getMetaDataElement(NodeAttributesElement.ASPECT_NAME) != null) {
 			writer.startAspectFragment(NodeAttributesElement.ASPECT_NAME);
 			writer.openFragment();
 			
