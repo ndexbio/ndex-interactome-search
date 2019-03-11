@@ -319,7 +319,7 @@ public class NetworkQueryManager {
 
 	
 	private  InteractomeSearchResult interConnectQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
-			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException, NdexException {
+			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException {
 		long t1 = Calendar.getInstance().getTimeInMillis();
 		Set<Long> edgeIds = new TreeSet<> ();
 		Map<Long, EdgesElement> edgeTable = new TreeMap<> ();
@@ -483,7 +483,7 @@ public class NetworkQueryManager {
 			
 			
 			status.put(PROGRESS, 40);
-			s.setEdgeCount(edgeIds.size());
+			s.setEdgeCount(edgeTable.size());
 
 			ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<> (2);
 			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasDerivedFrom", netUUIDStr));
@@ -491,7 +491,7 @@ public class NetworkQueryManager {
 				"NDEx Interactome Query/v1.1 (Query terms=\""+ genes.stream().collect(Collectors.joining(","))
 				+ "\")"));
 		
-			writeOtherAspectsForSubnetwork(netUUIDStr, nodeIds, edgeIds, writer, md, postmd,
+			writeOtherAspectsForSubnetwork(netUUIDStr, finalNodes, edgeTable.keySet(), writer, md, postmd,
 				"Interactome query result on network" , provenanceRecords, nodeIds);
 		
 			status.put(PROGRESS, 95);
@@ -506,7 +506,7 @@ public class NetworkQueryManager {
 		
 		long t2 = Calendar.getInstance().getTimeInMillis();
         status.put("wallTime", Long.valueOf(t2-t1));
-		accLogger.info("Total " + (t2-t1)/1000f + " seconds. Returned " + edgeIds.size() + " edges and " + nodeIds.size() + " nodes.",
+		accLogger.info("Total " + (t2-t1)/1000f + " seconds. Returned " + edgeTable.size() + " edges and " + nodeIds.size() + " nodes.",
 				new Object[]{});
 		
 		return currentResult;
@@ -514,7 +514,7 @@ public class NetworkQueryManager {
 
 	
 	private static InteractomeSearchResult directQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
-			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException, NdexException {
+			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException {
 		long t1 = Calendar.getInstance().getTimeInMillis();
 		Set<Long> edgeIds = new TreeSet<> ();
 		
