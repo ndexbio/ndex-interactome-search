@@ -1,7 +1,7 @@
 package org.ndexbio.interactomesearch.object;
 
 public class NetworkShortSummary {
-
+	
 	private String name;
 	private String description;
 	private String URL;

@@ -16,6 +16,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -111,7 +112,8 @@ public class NetworkQueryManager {
         
         for (Map.Entry<Integer, GeneQueryNodes> e: r.getResultSet().entrySet()) {
 
-			String netUUIDStr = symbolDB.getUUIDFromNetId(e.getKey());
+        	NetworkShortSummary summary = symbolDB.getShortSummaryFromNetId(e.getKey());
+			String netUUIDStr = summary.getUuid();
 	
 			if (netUUIDStr == null)
 				throw new NdexException("Network id "+ e.getKey() + " is not found in UUID mapping table." );
@@ -123,7 +125,7 @@ public class NetworkQueryManager {
 
 			if ( e.getValue().getNodes().size() > 0) {
 			//neighbourhoodQuery(taskId, e.getKey(), e.getValue().getNodes(), genes);
-				resultList.add(directQuery(taskId, netUUIDStr, e.getValue().getNodes(), genes, status, e.getValue().getHitGenes()));
+				resultList.add(runQuery(taskId, summary, e.getValue().getNodes(), genes, status, e.getValue().getHitGenes()));
 			}
 			//update the status record	
 			status.put(PROGRESS, 100);
@@ -132,7 +134,7 @@ public class NetworkQueryManager {
 	        st.setProgress(Math.round(counter*100/total));
 		}
         
-        //TODO: sort the results and then write out to file.
+        //sort the results and then write out to file.
         
         Collections.sort(resultList, new Comparator<InteractomeSearchResult>() {
             @Override
@@ -302,6 +304,213 @@ public class NetworkQueryManager {
 		accLogger.info("Total " + (t2-t1)/1000f + " seconds. Returned " + edgeIds.size() + " edges and " + newNodeIds.size() + " nodes.",
 				new Object[]{});
 	} */
+
+	private InteractomeSearchResult runQuery(UUID taskId, NetworkShortSummary summary, final Set<Long> nodeIds, List<String> genes,
+			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException, NdexException {
+	   if(summary.getType().equals("i")) {
+		   return directQuery(taskId,summary.getUuid(), nodeIds, genes,
+				   status, hitgenes);
+	   }  
+	   
+	   return interConnectQuery(taskId,summary.getUuid(), nodeIds, genes,
+				   status, hitgenes);
+	   
+	}
+
+	
+	private  InteractomeSearchResult interConnectQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
+			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException, NdexException {
+		long t1 = Calendar.getInstance().getTimeInMillis();
+		Set<Long> edgeIds = new TreeSet<> ();
+		Map<Long, EdgesElement> edgeTable = new TreeMap<> ();
+
+		//NodeId -> unique neighbor node ids
+		Map<Long,NodeDegreeHelper> nodeNeighborIdTable = new TreeMap<>();
+		
+		InteractomeSearchResult currentResult = new  InteractomeSearchResult();
+		currentResult.setNetworkUUID(netUUIDStr);
+		currentResult.setHitGenes(hitgenes);
+		InteractomeResultNetworkSummary s = new InteractomeResultNetworkSummary();
+		currentResult.setSummary(s);
+		NetworkShortSummary summary = App.getDBTable().get(netUUIDStr);
+		s.setParentEdgeCount(summary.getEdgeCount());
+		s.setParentNodeCount(summary.getNodeCount());
+		s.setParentNetworkName(summary.getName());
+		
+		s.setNodeCount(nodeIds.size());
+		
+		String tmpFileName = App.getWorkingPath() + "/result/" + taskId.toString() + "/tmp_" + netUUIDStr;
+		
+		try (FileOutputStream out = new FileOutputStream (tmpFileName) ) {
+		
+			NdexCXNetworkWriter writer = new NdexCXNetworkWriter(out, true);
+			MetaDataCollection md = prepareMetadata(netUUIDStr) ;
+			writer.start();
+			writer.writeMetadata(md);
+		
+			MetaDataCollection postmd = new MetaDataCollection();
+		
+			writeContextAspect(netUUIDStr, writer, md, postmd);
+
+			if (md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
+				try (AspectIterator<EdgesElement> ei = new AspectIterator<>(netUUIDStr,
+						EdgesElement.ASPECT_NAME, EdgesElement.class, pathPrefix )) {
+					while (ei.hasNext()) {
+						EdgesElement edge = ei.next();					
+						if (nodeIds.contains(edge.getSource())) {
+							edgeTable.put(edge.getId(), edge);
+							if ( ! nodeIds.contains(edge.getTarget())) {
+								NodeDegreeHelper h = nodeNeighborIdTable.get(edge.getTarget());
+								if (h != null && h.isToBeDeleted()) {
+									if (h.getNodeId().equals(edge.getSource())) {
+										h.addEdge(edge.getId());
+									} else {
+										h.setToBeDeleted(false);
+										h.removeAllEdges();
+									}
+								} else if ( h == null) {
+									NodeDegreeHelper newHelper = new NodeDegreeHelper(edge.getSource(), edge.getId());
+									nodeNeighborIdTable.put(edge.getTarget(), newHelper);
+								}
+							}
+						} else if (nodeIds.contains(edge.getTarget())) {
+//							writer.writeElement(edge);
+							edgeTable.put(edge.getId(), edge);
+							if ( ! nodeIds.contains(edge.getSource())) {
+								NodeDegreeHelper h = nodeNeighborIdTable.get(edge.getSource());
+							
+								if (h != null && h.isToBeDeleted() ) {
+									if (h.getNodeId().equals(edge.getTarget())) {
+										h.addEdge(edge.getId());
+									} else {
+										h.setToBeDeleted(false);
+										h.removeAllEdges();
+									}
+								} else if ( h == null) {
+									NodeDegreeHelper newHelper = new NodeDegreeHelper(edge.getTarget(), edge.getId());
+									nodeNeighborIdTable.put(edge.getSource(), newHelper);
+								}
+							}
+						}
+
+					}
+				}
+			}
+			
+			System.out.println( edgeTable.size()  + " edges from 2-step interconnect query.");
+			//trim the nodes that only connect to one starting nodes.
+			Set<Long> finalNodes = new TreeSet<>();
+			for (Map.Entry<Long, NodeDegreeHelper> e : nodeNeighborIdTable.entrySet()) {
+				NodeDegreeHelper h = e.getValue();
+				if ( h.isToBeDeleted()) {
+					for ( Long edgeId : h.getEdgeIds())
+						edgeTable.remove( edgeId);				
+				} else {
+					finalNodes.add(e.getKey());
+				}
+			}
+			
+			System.out.println( edgeTable.size()  + " edges after trim.");
+			
+			// write edge aspect 
+			writer.startAspectFragment(EdgesElement.ASPECT_NAME);
+			writer.openFragment();
+
+			// write the edges in the table first
+			if ( edgeTable.size() > 0 ) {
+
+				for (EdgesElement e : edgeTable.values()) {
+						writer.writeElement(e);
+				}
+		
+			}
+			// write extra edges that found between the new neighboring nodes.
+			int additionalEdgeCnt = 0 ;
+			long finalEdgeIdCounter = edgeTable.isEmpty()? 0L: Collections.max(edgeTable.keySet());
+			
+			if (finalNodes.size()>0 && md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
+				try (AspectIterator<EdgesElement> ei = new AspectIterator<>(netUUIDStr,
+						EdgesElement.ASPECT_NAME, EdgesElement.class, pathPrefix )) {
+					while (ei.hasNext()) {
+						EdgesElement edge = ei.next();					
+						if ((!edgeTable.containsKey( edge.getId())) && 
+								finalNodes.contains(edge.getSource()) && finalNodes.contains(edge.getTarget())) {
+							writer.writeElement(edge);
+							if (edge.getId()>finalEdgeIdCounter) 
+								finalEdgeIdCounter = edge.getId();
+						}
+					}	
+				}
+			}	
+			
+			
+			writer.closeFragment();
+			writer.endAspectFragment();
+			System.out.println("Query returned " + writer.getFragmentLength() + " edges.");
+
+			MetaDataElement mde = new MetaDataElement(EdgesElement.ASPECT_NAME, mdeVer);
+			mde.setElementCount(Long.valueOf(edgeTable.size() + additionalEdgeCnt));
+			mde.setIdCounter(Long.valueOf(finalEdgeIdCounter));
+			postmd.add(mde);
+
+			
+			System.out.println ( "done writing out edges.");
+
+			finalNodes.addAll(nodeIds);
+
+			status.put(PROGRESS, 20);
+
+			//write nodes
+			writer.startAspectFragment(NodesElement.ASPECT_NAME);
+			writer.openFragment();
+			try (AspectIterator<NodesElement> ei = new AspectIterator<>(netUUIDStr,
+						NodesElement.ASPECT_NAME, NodesElement.class, pathPrefix)) {
+				while (ei.hasNext()) {
+					NodesElement node = ei.next();
+					if (finalNodes.contains(Long.valueOf(node.getId()))) {
+							writer.writeElement(node);
+					}
+				}
+			}
+			writer.closeFragment();
+			writer.endAspectFragment();
+			if ( nodeIds.size()>0) {
+				MetaDataElement mde1 = new MetaDataElement(NodesElement.ASPECT_NAME,mdeVer);
+				mde1.setElementCount(Long.valueOf(finalNodes.size()));
+				mde1.setIdCounter(nodeIds.isEmpty()? 0L: Collections.max(nodeIds));
+				postmd.add(mde1);
+			}
+			
+			
+			status.put(PROGRESS, 40);
+			s.setEdgeCount(edgeIds.size());
+
+			ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<> (2);
+			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasDerivedFrom", netUUIDStr));
+			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasGeneratedBy",
+				"NDEx Interactome Query/v1.1 (Query terms=\""+ genes.stream().collect(Collectors.joining(","))
+				+ "\")"));
+		
+			writeOtherAspectsForSubnetwork(netUUIDStr, nodeIds, edgeIds, writer, md, postmd,
+				"Interactome query result on network" , provenanceRecords, nodeIds);
+		
+			status.put(PROGRESS, 95);
+			writer.writeMetadata(postmd);
+			writer.end();
+		}
+		
+		//rename the file 
+		java.nio.file.Path src = Paths.get(tmpFileName);
+		java.nio.file.Path tgt = Paths.get(App.getWorkingPath() + "/result/" + taskId.toString() + "/" + netUUIDStr + ".cx");		
+		Files.move(src, tgt, StandardCopyOption.ATOMIC_MOVE); 				
+		
+		long t2 = Calendar.getInstance().getTimeInMillis();
+        status.put("wallTime", Long.valueOf(t2-t1));
+		accLogger.info("Total " + (t2-t1)/1000f + " seconds. Returned " + edgeIds.size() + " edges and " + nodeIds.size() + " nodes.",
+				new Object[]{});
+		
+		return currentResult;
+	}
 
 	
 	private static InteractomeSearchResult directQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
@@ -758,4 +967,41 @@ public class NetworkQueryManager {
 		}
 	}
 	
+	private class NodeDegreeHelper {
+		
+		private boolean tobeDeleted;
+		private Long nodeId;
+		private List<Long> edgeIds;
+		
+
+		public NodeDegreeHelper (Long newNodeId, Long newEdgeId) {
+			this.setToBeDeleted(true);
+			edgeIds = new ArrayList<>();
+			this.nodeId = newNodeId;
+			edgeIds.add(newEdgeId);
+		}
+
+		public boolean isToBeDeleted() {
+			return tobeDeleted;
+		}
+
+		public void setToBeDeleted(boolean toBeDeleted) {
+			this.tobeDeleted = toBeDeleted;
+		}
+
+		public Long getNodeId() {
+			return nodeId;
+		}
+
+
+		public List<Long> getEdgeIds() {
+			return edgeIds;
+		}
+		
+		public void addEdge(Long id) { this.edgeIds.add(id); }
+		
+		public void removeAllEdges() {edgeIds = null;}
+
+	}
+
 }

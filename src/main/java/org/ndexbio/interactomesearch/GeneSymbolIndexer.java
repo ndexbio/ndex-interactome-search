@@ -65,7 +65,7 @@ public class GeneSymbolIndexer {
 	}
 	
 
-	public String getUUIDFromNetId(Integer net_id) { return netIdMapper.get(net_id).getUuid();}
+	//public String getUUIDFromNetId(Integer net_id) { return netIdMapper.get(net_id).getUuid();}
 
 	public NetworkShortSummary getShortSummaryFromNetId(Integer net_id) {return netIdMapper.get(net_id);}
 	
