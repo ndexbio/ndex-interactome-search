@@ -118,6 +118,7 @@ public class MessageResource {
         	rec.setDescription(entry.getValue().getDescription());
         	rec.setName( entry.getValue().getName());
         	rec.setURL( entry.getValue().getURL() );
+        	rec.setImageURL(entry.getValue().getImageURL());
         	sources.add(rec);
         }
 		

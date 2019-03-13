@@ -9,6 +9,7 @@ public class NetworkShortSummary {
 	private int edgeCount;
 	private String type;
 	private String uuid;
+	private String imageURL;
 	
 	public NetworkShortSummary() {}
 
@@ -66,6 +67,14 @@ public class NetworkShortSummary {
 
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
+	}
+
+	public String getImageURL() {
+		return imageURL;
+	}
+
+	public void setImageURL(String imageURL) {
+		this.imageURL = imageURL;
 	}
 	
 	

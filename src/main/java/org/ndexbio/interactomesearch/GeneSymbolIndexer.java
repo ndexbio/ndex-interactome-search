@@ -37,22 +37,25 @@ public class GeneSymbolIndexer {
 		netIdMapper = new TreeMap<>();
 		cp = JdbcConnectionPool.create("jdbc:h2:" + dbpath, "sa", "sa");
 	    try ( Connection conn = cp.getConnection()) {
-	        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS NETWORKS (NET_ID INT auto_increment PRIMARY KEY, NET_UUID VARCHAR(36) UNIQUE, type varchar(10))");
+	        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS NETWORKS (NET_ID INT auto_increment PRIMARY KEY, "
+	        		+ "NET_UUID VARCHAR(36) UNIQUE, type varchar(10), imageurl varchar(500))");
 	        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS GENESYMBOLS (SYMBOL VARCHAR(30),NODE_ID BIGINT, NET_ID INT, "+
 	                  "PRIMARY KEY (SYMBOL,NODE_ID,NET_ID), FOREIGN KEY(NET_ID) REFERENCES NETWORKS(NET_ID))");
 
 	        // populate the id mapping table
-	        try (PreparedStatement p = conn.prepareStatement("select net_id, net_uuid, type from networks")) {
+	        try (PreparedStatement p = conn.prepareStatement("select net_id, net_uuid, type, imageurl from networks")) {
 				try ( ResultSet rs = p.executeQuery()) {
 					while ( rs.next()) {
 					  NetworkShortSummary summary = new NetworkShortSummary();
 					  summary.setUuid(rs.getString(2));
 					  summary.setType(rs.getString(3));
+					  summary.setImageURL(rs.getString(4));
 					  netIdMapper.put(Integer.valueOf(rs.getInt(1)), summary );
 					}
 				}
 			}
 	    }
+	    
 	    pathPrefix = NetworkQueryManager.getDataFilePathPrefix();
 	    
 	    
@@ -83,7 +86,7 @@ public class GeneSymbolIndexer {
 	 * @throws JsonProcessingException
 	 * @throws IOException
 	 */
-	public void rebuildIndex(UUID networkUUID, String networkType) throws SQLException, JsonProcessingException, IOException {
+	public void rebuildIndex(UUID networkUUID, String networkType, String imageURL) throws SQLException, JsonProcessingException, IOException {
 		
 		System.out.println("Rebuild Index on network " + networkUUID);
 		
@@ -92,7 +95,8 @@ public class GeneSymbolIndexer {
         int net_id;
 		try ( Connection conn = cp.getConnection()) {
 	        
-	        conn.createStatement().execute("insert into networks (net_uuid, type) values('"+networkUUID+"','"+ networkType +  "')");
+	        conn.createStatement().execute("insert into networks (net_uuid, type, imageurl) values('"+networkUUID+"','"+
+	        		networkType +  "','" + imageURL + "')");
 	        conn.commit();
 	        try (ResultSet r = conn.createStatement().executeQuery("select net_id from networks where net_uuid='"+networkUUID+"'")) {
 	        	if ( r.next()) {
@@ -231,19 +235,35 @@ public class GeneSymbolIndexer {
 	} 
 	
 	
+	/**
+	 * 
+	 * @param args takes network list file as the last parameter. The file is a json file with this format 
+	 *   [ 
+	 *   { "uuid": ".....", "type": 'i'/'a', "imageurl": "http://...." },
+	 *   ...
+	 *   ]
+	 *   assume it is in the current working directory.
+	 * @throws Exception
+	 */
 	public static void main(String... args) throws Exception {
 		
-		if ( args.length == 4 ) {
+		if ( args.length == 3 ) {
 			if (args[3].equals("i") || args[3].equals("a")) {
 				GeneSymbolIndexer db = new GeneSymbolIndexer(args[0]);
 				db.setPathPrefix(args[1]);
-				db.rebuildIndex(UUID.fromString(args[2]), args[3]);
+				
+				
+				
+				db.rebuildIndex(UUID.fromString(args[2]), args[3], args[4]);
 				db.shutdown();
 			} else
 				System.out.print("The forth parameter can only be 'i' or 'a'.");
 		} else {
-			System.out.println ("Rebuild Index of a network GeneSymbolIndexer <db_path> <network_file_prefix> networkUUID");
-			System.out.println ("Example: GeneSymbolIndexer /opt/ndex/services/interactome/genedb /opt/ndex/data/ xxx-xxxxx-xxxxx");	
+		
+			
+			System.out.println ("Rebuild Index of a network GeneSymbolIndexer <db_path> <network_file_prefix> <network_list_file>");
+			System.out.println ("Rebuild Index of a network GeneSymbolIndexer <db_path> <network_file_prefix> networkUUID <type> <image_url>");
+			System.out.println ("Example: GeneSymbolIndexer /opt/ndex/services/interactome/genedb /opt/ndex/data/ xxx-xxxxx-xxxxx i http://example.com/image1.svg");	
 		
 		}
     }

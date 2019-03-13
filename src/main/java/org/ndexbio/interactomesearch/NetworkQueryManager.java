@@ -141,17 +141,17 @@ public class NetworkQueryManager {
             public int compare(InteractomeSearchResult h1, InteractomeSearchResult h2) {
             	
             	// sorting by score. value = edgeCount*2 + nodeCount
-            	int s1 = h1.getSummary().getEdgeCount() *2 + h2.getSummary().getNodeCount();
-            	int s2 = h2.getSummary().getEdgeCount() *2 + h2.getSummary().getNodeCount();
+            	int s1 = h1.getEdgeCount() *2 + h2.getNodeCount();
+            	int s2 = h2.getEdgeCount() *2 + h2.getNodeCount();
             	
             	if (s1>s2) return -1;
             	if (s1 < s2 ) return 1;
-            	if (s1 == s2) {
-            		if (h1.getSummary().getParentEdgeCount() > h2.getSummary().getParentEdgeCount() ) 
+          /*  	if (s1 == s2) {
+           		if (h1.getSummary().getParentEdgeCount() > h2.getSummary().getParentEdgeCount() ) 
             			return -1;
             		if (h1.getSummary().getParentEdgeCount() < h2.getSummary().getParentEdgeCount() ) 
             		    return 1;
-            	}
+            	}*/
         		return 0;            	
             }
         });
@@ -327,17 +327,8 @@ public class NetworkQueryManager {
 		//NodeId -> unique neighbor node ids
 		Map<Long,NodeDegreeHelper> nodeNeighborIdTable = new TreeMap<>();
 		
-		InteractomeSearchResult currentResult = new  InteractomeSearchResult();
-		currentResult.setNetworkUUID(netUUIDStr);
-		currentResult.setHitGenes(hitgenes);
-		InteractomeResultNetworkSummary s = new InteractomeResultNetworkSummary();
-		currentResult.setSummary(s);
-		NetworkShortSummary summary = App.getDBTable().get(netUUIDStr);
-		s.setParentEdgeCount(summary.getEdgeCount());
-		s.setParentNodeCount(summary.getNodeCount());
-		s.setParentNetworkName(summary.getName());
-		
-		s.setNodeCount(nodeIds.size());
+		InteractomeSearchResult currentResult;
+		//s.setNodeCount(nodeIds.size());
 		
 		String tmpFileName = App.getWorkingPath() + "/result/" + taskId.toString() + "/tmp_" + netUUIDStr;
 		
@@ -483,7 +474,7 @@ public class NetworkQueryManager {
 			
 			
 			status.put(PROGRESS, 40);
-			s.setEdgeCount(edgeTable.size());
+			currentResult = createResult(netUUIDStr, hitgenes, edgeTable.size(),finalNodes.size());
 
 			ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<> (2);
 			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasDerivedFrom", netUUIDStr));
@@ -511,6 +502,20 @@ public class NetworkQueryManager {
 		
 		return currentResult;
 	}
+	
+	private static InteractomeSearchResult createResult(String netUUIDStr,Set<String> hitgenes, int nodeCount, int edgeCount ) {
+		InteractomeSearchResult currentResult = new  InteractomeSearchResult();
+		currentResult.setNetworkUUID(netUUIDStr);
+		currentResult.setHitGenes(hitgenes);
+		NetworkShortSummary summary = App.getDBTable().get(netUUIDStr);
+		currentResult.setDescription(summary.getName() + ", parent network size: " + 
+				   summary.getNodeCount() + " nodes, " + summary.getEdgeCount() + " edges"
+		        );
+		currentResult.setNodeCount(nodeCount);
+		currentResult.setEdgeCount(edgeCount);
+		currentResult.setPercentOverlap(edgeCount*100/summary.getEdgeCount());
+		return currentResult;
+	}
 
 	
 	private static InteractomeSearchResult directQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
@@ -518,17 +523,7 @@ public class NetworkQueryManager {
 		long t1 = Calendar.getInstance().getTimeInMillis();
 		Set<Long> edgeIds = new TreeSet<> ();
 		
-		InteractomeSearchResult currentResult = new  InteractomeSearchResult();
-		currentResult.setNetworkUUID(netUUIDStr);
-		currentResult.setHitGenes(hitgenes);
-		InteractomeResultNetworkSummary s = new InteractomeResultNetworkSummary();
-		currentResult.setSummary(s);
-		NetworkShortSummary summary = App.getDBTable().get(netUUIDStr);
-		s.setParentEdgeCount(summary.getEdgeCount());
-		s.setParentNodeCount(summary.getNodeCount());
-		s.setParentNetworkName(summary.getName());
-		
-		s.setNodeCount(nodeIds.size());
+		InteractomeSearchResult currentResult;
 		
 		String tmpFileName = App.getWorkingPath() + "/result/" + taskId.toString() + "/tmp_" + netUUIDStr;
 		
@@ -594,7 +589,7 @@ public class NetworkQueryManager {
 			postmd.add(mde);
 
 			status.put(PROGRESS, 40);
-			s.setEdgeCount(edgeIds.size());
+			currentResult = createResult(netUUIDStr, hitgenes,nodeIds.size(), edgeIds.size());
 
 			ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<> (2);
 			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasDerivedFrom", netUUIDStr));

@@ -6,6 +6,7 @@ public class InteractomeRefNetworkEntry {
 	private String description;
 	private String name;
 	private String URL;
+	private String imageURL;
 	
 	public InteractomeRefNetworkEntry() {}
 
@@ -39,6 +40,14 @@ public class InteractomeRefNetworkEntry {
 
 	public void setURL(String uRL) {
 		URL = uRL;
+	}
+
+	public String getImageURL() {
+		return imageURL;
+	}
+
+	public void setImageURL(String imageURL) {
+		this.imageURL = imageURL;
 	}
 	
 	
