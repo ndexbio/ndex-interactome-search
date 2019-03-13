@@ -16,7 +16,8 @@ public class InteractomeSearchResult {
 	private String description;
 	private int nodeCount;
 	private int edgeCount;
-
+    private String imageURL;
+    
 	public InteractomeSearchResult() {
 		//summary = new InteractomeResultNetworkSummary();
 		hitGenes = new TreeSet<>();
@@ -84,5 +85,13 @@ public class InteractomeSearchResult {
 
 	public void setEdgeCount(int edgeCount) {
 		this.edgeCount = edgeCount;
+	}
+
+	public String getImageURL() {
+		return imageURL;
+	}
+
+	public void setImageURL(String imageurl) {
+		this.imageURL = imageurl;
 	}
 }

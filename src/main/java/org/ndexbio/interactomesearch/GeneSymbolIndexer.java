@@ -1,13 +1,18 @@
 package org.ndexbio.interactomesearch;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +27,8 @@ import org.ndexbio.interactomesearch.object.GeneSymbolSearchResult;
 import org.ndexbio.interactomesearch.object.NetworkShortSummary;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 public class GeneSymbolIndexer {
 	
@@ -82,6 +89,7 @@ public class GeneSymbolIndexer {
 	 * 
 	 * @param networkUUID
 	 * @param type value 'i' means interaction network. 'a' means protein association network. They will be treated differently in the search.
+	 * @param imageURL 
 	 * @throws SQLException
 	 * @throws JsonProcessingException
 	 * @throws IOException
@@ -248,16 +256,22 @@ public class GeneSymbolIndexer {
 	public static void main(String... args) throws Exception {
 		
 		if ( args.length == 3 ) {
-			if (args[3].equals("i") || args[3].equals("a")) {
-				GeneSymbolIndexer db = new GeneSymbolIndexer(args[0]);
-				db.setPathPrefix(args[1]);
+			GeneSymbolIndexer db = new GeneSymbolIndexer(args[0]);
+			db.setPathPrefix(args[1]);
 				
+			try (FileInputStream inputStream = new FileInputStream(args[2])) {
+				  //   Type sooper = getClass().getGenericSuperclass();
+				     
+				Iterator<Hashtable<String,String>> it = new ObjectMapper().readerFor(TypeFactory.defaultInstance().constructMapLikeType(Hashtable.class,String.class, String.class))
+							.readValues(inputStream);
 				
+				while(it.hasNext()) {
+					Hashtable<String,String> s = it.next();
+					db.rebuildIndex(UUID.fromString(s.get("uuid")), s.get("type"), s.get("imageURL"));
+				}
+			}
 				
-				db.rebuildIndex(UUID.fromString(args[2]), args[3], args[4]);
-				db.shutdown();
-			} else
-				System.out.print("The forth parameter can only be 'i' or 'a'.");
+			db.shutdown();
 		} else {
 		
 			

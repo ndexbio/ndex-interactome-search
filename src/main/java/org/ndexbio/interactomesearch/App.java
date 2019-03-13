@@ -1,6 +1,7 @@
 package org.ndexbio.interactomesearch;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Hashtable;
@@ -14,8 +15,12 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.RolloverFileOutputStream;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
+import org.ndexbio.cxio.aspects.datamodels.CyVisualPropertiesElement;
+import org.ndexbio.cxio.core.interfaces.AspectElement;
+import org.ndexbio.cxio.core.readers.NiceCXNetworkReader;
 import org.ndexbio.interactomesearch.object.NetworkShortSummary;
 import org.ndexbio.interactomesearch.object.SearchStatus;
+import org.ndexbio.model.cx.NiceCXNetwork;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.rest.client.NdexRestClient;
 import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
@@ -42,6 +47,8 @@ public class App
 	 
 	 private static final Hashtable<String, NetworkShortSummary> dbTable = new Hashtable<>();
 	 
+	 private static Collection<AspectElement> templateStyles;
+	 
 	 // task ID to status table
 	 private static final Hashtable<UUID, SearchStatus> statusTable = new Hashtable<>();  
 	 
@@ -54,6 +61,10 @@ public class App
 	  public static String getServiceHost() {return serviceHost;}
 	  public static int getPort() { return port;}
 	  public static Hashtable<String, NetworkShortSummary> getDBTable() { return dbTable;}
+	  
+	  public static Collection<AspectElement> getVisualSytleTemplate() {
+		  return templateStyles;
+	  }
 	  
 	  public static void main( String[] args ) throws Exception
 	  {
@@ -74,6 +85,14 @@ public class App
 	  {
 		System.out.println("You can use -Dndex.queryport=8285 and -Dndex.fileRepoPrefix=/opt/ndex/data/ -Dndex.host=public.ndexbio.org -Dndex.interactomedb=/opt/ndex/services/interactome + "
 				+ "\n        -Dndex.interactomehost=localhost to set runtime parameters.");
+		
+		// read in the template network for sytles.
+		try (FileInputStream s = new FileInputStream("template.cx")) {
+			NiceCXNetworkReader cxreader = new NiceCXNetworkReader();
+			templateStyles = cxreader.readNiceCXNetwork(s)
+					.getOpaqueAspectTable().get(CyVisualPropertiesElement.ASPECT_NAME);
+		}
+		
 		ch.qos.logback.classic.Logger rootLog = 
         		(ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 		rootLog.setLevel(Level.INFO);
