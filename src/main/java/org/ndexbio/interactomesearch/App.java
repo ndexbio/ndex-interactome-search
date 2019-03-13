@@ -129,7 +129,7 @@ public class App
 			summary.setEdgeCount(sum.getEdgeCount());
 			summary.setName(sum.getName());
 			summary.setNodeCount(sum.getNodeCount());
-			summary.setURL(ndexServerName+"/v2/network/"+ sum.getExternalId() );
+			summary.setURL(ndexServerName+"/network/"+ sum.getExternalId() );
 			dbTable.put(summary.getUuid(), summary);
 		}
 
