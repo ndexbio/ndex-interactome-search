@@ -416,7 +416,7 @@ public class NetworkQueryManager {
 		
 			}
 			// write extra edges that found between the new neighboring nodes.
-			int additionalEdgeCnt = 0 ;
+		//	int additionalEdgeCnt = 0 ;
 			long finalEdgeIdCounter = edgeTable.isEmpty()? 0L: Collections.max(edgeTable.keySet());
 			
 			if (finalNodes.size()>0 && md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
@@ -427,6 +427,7 @@ public class NetworkQueryManager {
 						if ((!edgeTable.containsKey( edge.getId())) && 
 								finalNodes.contains(edge.getSource()) && finalNodes.contains(edge.getTarget())) {
 							writer.writeElement(edge);
+							edgeTable.put(edge.getId(), edge);
 							if (edge.getId()>finalEdgeIdCounter) 
 								finalEdgeIdCounter = edge.getId();
 						}
@@ -440,7 +441,7 @@ public class NetworkQueryManager {
 			System.out.println("Query returned " + writer.getFragmentLength() + " edges.");
 
 			MetaDataElement mde = new MetaDataElement(EdgesElement.ASPECT_NAME, mdeVer);
-			mde.setElementCount(Long.valueOf(edgeTable.size() + additionalEdgeCnt));
+			mde.setElementCount(Long.valueOf(edgeTable.size() ));
 			mde.setIdCounter(Long.valueOf(finalEdgeIdCounter));
 			postmd.add(mde);
 
