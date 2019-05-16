@@ -32,7 +32,6 @@ import org.ndexbio.cxio.aspects.datamodels.NodeAttributesElement;
 import org.ndexbio.cxio.aspects.datamodels.NodesElement;
 import org.ndexbio.cxio.core.AspectIterator;
 import org.ndexbio.cxio.core.NdexCXNetworkWriter;
-import org.ndexbio.cxio.core.interfaces.AspectElement;
 import org.ndexbio.cxio.metadata.MetaDataCollection;
 import org.ndexbio.cxio.metadata.MetaDataElement;
 import org.ndexbio.interactomesearch.object.GeneQueryNodes;
@@ -321,7 +320,7 @@ public class NetworkQueryManager {
 	private  InteractomeSearchResult interConnectQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
 			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException {
 		long t1 = Calendar.getInstance().getTimeInMillis();
-		Set<Long> edgeIds = new TreeSet<> ();
+		//Set<Long> edgeIds = new TreeSet<> ();
 		Map<Long, EdgesElement> edgeTable = new TreeMap<> ();
 
 		//NodeId -> unique neighbor node ids
@@ -698,10 +697,13 @@ public class NetworkQueryManager {
 		postmd.add(mde2);
 
 		//process cyVisualProperty aspect
+		
 		if (md.getMetaDataElement(CyVisualPropertiesElement.ASPECT_NAME) != null) {
 			writer.startAspectFragment(CyVisualPropertiesElement.ASPECT_NAME);
 			writer.openFragment();
-			for (AspectElement e : App.getVisualSytleTemplate()) {
+
+			// commenting this out. We are switching back to use the original sytle on the networks.
+			/*for (AspectElement e : App.getVisualSytleTemplate()) {
 				CyVisualPropertiesElement elmt = (CyVisualPropertiesElement)e;
 				if ( elmt.getProperties_of().equals("nodes")) {
 					if ( nodeIds.contains(elmt.getApplies_to())) {
@@ -714,8 +716,8 @@ public class NetworkQueryManager {
 				} else {
 					writer.writeElement(elmt);
 				}
-			}
-			/*try (AspectIterator<CyVisualPropertiesElement> it = new AspectIterator<>(netUUID,
+			} */
+			try (AspectIterator<CyVisualPropertiesElement> it = new AspectIterator<>(netUUID,
 					CyVisualPropertiesElement.ASPECT_NAME, 
 							CyVisualPropertiesElement.class, pathPrefix)) {
 				while (it.hasNext()) {
@@ -732,7 +734,7 @@ public class NetworkQueryManager {
 						writer.writeElement(elmt);
 					}
 				}
-			}*/
+			}
 			writer.closeFragment();
 			writer.endAspectFragment();
 			MetaDataElement mde = new MetaDataElement(CyVisualPropertiesElement.ASPECT_NAME,mdeVer);

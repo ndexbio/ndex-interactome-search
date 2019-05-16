@@ -166,13 +166,13 @@ public class GeneSymbolIndexer {
 	    	for(Map.Entry<Long, HashMap<String,Object>> e : nodeTable.entrySet()) {
 	    		HashMap<String, Object> n = e.getValue();
 	    		String o = ((String)n.get("t"));
-	    		if ( o == null || o.equals("protein") || o.equals("gene")) {
+	    		if ( o == null || o.equalsIgnoreCase("protein") || o.equalsIgnoreCase("gene")) {
 	    			String geneSymbol = (String)n.get("n");
 	    			if ( geneSymbol != null) {
 	    				insertGeneSymbol (conn, geneSymbol, e.getKey(), net_id);
 	    				count++;
 	    			}
-	    		} else if (o.equals("proteinfamily") || o.equals("complex")) {
+	    		} else if (o.equalsIgnoreCase("proteinfamily") || o.equalsIgnoreCase("complex")) {
 	    			List<String> geneList = (List<String>)n.get("m");
 	    			for ( String g : geneList) {
 	    				insertGeneSymbol(conn, g, e.getKey(), net_id);	
@@ -272,8 +272,13 @@ public class GeneSymbolIndexer {
 			}
 				
 			db.shutdown();
+		} else if (args.length == 5) {
+			GeneSymbolIndexer db = new GeneSymbolIndexer(args[0]);
+			db.setPathPrefix(args[1]);
+			db.rebuildIndex(UUID.fromString(args[2]), args[3], args[4]);
+			db.shutdown();
+			
 		} else {
-		
 			
 			System.out.println ("Rebuild Index of a network GeneSymbolIndexer <db_path> <network_file_prefix> <network_list_file>");
 			System.out.println ("Rebuild Index of a network GeneSymbolIndexer <db_path> <network_file_prefix> networkUUID <type> <image_url>");
