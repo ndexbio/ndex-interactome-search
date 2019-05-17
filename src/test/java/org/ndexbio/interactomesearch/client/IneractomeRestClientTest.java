@@ -24,7 +24,7 @@ public class IneractomeRestClientTest {
 		
 	    List<InteractomeRefNetworkEntry> r = client.getDatabase();
 	    
-		assertEquals(r.size(), 5);
+		assertEquals(r.size(), 7);
 
 	}
 
@@ -44,7 +44,7 @@ public class IneractomeRestClientTest {
 		
 		List<InteractomeSearchResult> r = client.getSearchResult(id);
 		
-		assertEquals(r.size(), 5);
+		assertEquals(r.size(), 7);
 	
 		try (InputStream inputStream = client.getOverlayedNetworkStream(id, UUID.fromString(r.get(0).getNetworkUUID()))) { 
 			String result = IOUtils.toString(inputStream, StandardCharsets.UTF_8);

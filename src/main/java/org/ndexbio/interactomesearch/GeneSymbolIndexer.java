@@ -3,12 +3,15 @@ package org.ndexbio.interactomesearch;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -20,6 +23,7 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 import org.h2.jdbcx.JdbcConnectionPool;
+import org.ndexbio.model.tools.TermUtilities;
 import org.ndexbio.cxio.aspects.datamodels.NodeAttributesElement;
 import org.ndexbio.cxio.aspects.datamodels.NodesElement;
 import org.ndexbio.cxio.core.AspectIterator;
@@ -149,7 +153,7 @@ public class GeneSymbolIndexer {
 						} else  // remove this node from table if it doesn't have gene symbol on it.
 							nodeTable.remove(attr.getPropertyOf());
 					}
-				} else if ( attr.getName().equals("members")) {
+				} else if ( attr.getName().equals("member")) {
 					HashMap<String,Object> n = nodeTable.get(attr.getPropertyOf());
 					if ( n != null) {
 						n.put("m", attr.getValues());
@@ -174,9 +178,11 @@ public class GeneSymbolIndexer {
 	    			}
 	    		} else if (o.equalsIgnoreCase("proteinfamily") || o.equalsIgnoreCase("complex")) {
 	    			List<String> geneList = (List<String>)n.get("m");
-	    			for ( String g : geneList) {
-	    				insertGeneSymbol(conn, g, e.getKey(), net_id);	
-	    				count++;
+	    			if ( geneList != null) {
+	    				for ( String g : geneList) {
+	    					insertGeneSymbol(conn, getIndexableString(g), e.getKey(), net_id);	
+	    					count++;
+	    				}
 	    			}
 	    		}
 	    	}
@@ -286,6 +292,33 @@ public class GeneSymbolIndexer {
 		
 		}
     }
+	
+	private static String getIndexableString(String termString) {
+		
+		// case 1 : termString is a URI
+		// example: http://identifiers.org/uniprot/P19838
+		// treat the last element in the URI as the identifier and the rest as
+		// prefix string. Just to help the future indexing.
+		//
+	   // List<String> result = new ArrayList<>(2) ;
+		//String identifier = null;
+		
+		String[] termStringComponents = TermUtilities.getNdexQName(termString);
+		if (termStringComponents != null && termStringComponents.length == 2) {
+			// case 2: termString is of the form (NamespacePrefix:)*Identifier
+	//		if ( !termStringComponents[0].contains(" "))
+			//  result.add(termString);
+			return (termStringComponents[1]);
+			///return  result;
+		} 
+		
+		// case 3: termString cannot be parsed, use it as the identifier.
+		// so leave the prefix as null and return the string
+		return (termString);
+		//return result;
+			
+	}
+	
 	
 	private static String concatenateGenes(Collection<String> genes) {
 		StringBuffer cnd = new StringBuffer() ;
