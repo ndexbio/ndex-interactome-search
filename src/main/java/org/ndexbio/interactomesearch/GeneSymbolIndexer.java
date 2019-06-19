@@ -152,7 +152,7 @@ public class GeneSymbolIndexer {
 							nodeTable.get(attr.getPropertyOf()).put("t", type);
 						} else  // remove this node from table if it doesn't have gene symbol on it.
 							nodeTable.remove(attr.getPropertyOf());
-					}
+					} 
 				} else if ( attr.getName().equals("member")) {
 					HashMap<String,Object> n = nodeTable.get(attr.getPropertyOf());
 					if ( n != null) {
@@ -164,6 +164,17 @@ public class GeneSymbolIndexer {
 	    	// ignore this aspect if nodes have no attributes on them.
 	    }
 
+	    System.out.println ("Total " + nodeTable.size() + " nodes after first scan.");
+	    
+	    
+	    if ( networkType.equals("a") ) {   // non-typed node in association network
+	    	nodeTable.entrySet() 
+            .removeIf( 
+                entry -> (entry.getValue().get("t") == null));
+		}
+	    
+	    System.out.println ("Total " + nodeTable.size() + " nodes for indexing.");
+	    
 	    int count = 0;
 	    // now create the index
 	    try ( Connection conn = cp.getConnection()) {
@@ -200,7 +211,7 @@ public class GeneSymbolIndexer {
 		
 		// quick hack to prevent errors because the networks have not been normalized yet. 
 		if ( gene.length()>30 || ( ! gene.matches ("^[^\\(\\)\\s,']+$") )) {
-			System.err.println("Wanring: gene symbol '" + gene + "' doesn't look correct, ignoring it.");
+			System.err.println("Warning: gene symbol '" + gene + "' doesn't look correct, ignoring it.");
 			return;
 		}
 		String sqlStr = "insert into genesymbols (SYMBOL, node_id, net_id) values (?, ?,"+netId + ")";

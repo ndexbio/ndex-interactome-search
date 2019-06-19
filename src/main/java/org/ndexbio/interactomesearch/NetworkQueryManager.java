@@ -474,7 +474,7 @@ public class NetworkQueryManager {
 			
 			
 			status.put(PROGRESS, 40);
-			currentResult = createResult(netUUIDStr, hitgenes, edgeTable.size(),finalNodes.size());
+			currentResult = createResult(netUUIDStr, hitgenes,finalNodes.size() ,edgeTable.size());
 
 			ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<> (2);
 			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasDerivedFrom", netUUIDStr));
