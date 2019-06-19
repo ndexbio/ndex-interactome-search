@@ -47,7 +47,7 @@ public class App
 	 
 	 private static final Hashtable<String, NetworkShortSummary> dbTable = new Hashtable<>();
 	 
-	 private static Collection<AspectElement> templateStyles;
+	// private static Collection<AspectElement> templateStyles;
 	 
 	 // task ID to status table
 	 private static final Hashtable<UUID, SearchStatus> statusTable = new Hashtable<>();  
@@ -62,9 +62,9 @@ public class App
 	  public static int getPort() { return port;}
 	  public static Hashtable<String, NetworkShortSummary> getDBTable() { return dbTable;}
 	  
-	  public static Collection<AspectElement> getVisualSytleTemplate() {
+	/*  public static Collection<AspectElement> getVisualSytleTemplate() {
 		  return templateStyles;
-	  }
+	  } */
 	  
 	  public static void main( String[] args ) throws Exception
 	  {
@@ -87,11 +87,12 @@ public class App
 				+ "\n        -Dndex.interactomehost=localhost to set runtime parameters.");
 		
 		// read in the template network for sytles.
-		try (FileInputStream s = new FileInputStream("template.cx")) {
+		// comment this out. We no longer need to apply template to networks.
+	/*	try (FileInputStream s = new FileInputStream("template.cx")) {
 			NiceCXNetworkReader cxreader = new NiceCXNetworkReader();
 			templateStyles = cxreader.readNiceCXNetwork(s)
 					.getOpaqueAspectTable().get(CyVisualPropertiesElement.ASPECT_NAME);
-		}
+		} */
 		
 		ch.qos.logback.classic.Logger rootLog = 
         		(ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
