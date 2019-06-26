@@ -3,6 +3,7 @@ package org.ndexbio.interactomesearch;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -139,9 +140,10 @@ public class NetworkQueryManager {
             @Override
             public int compare(InteractomeSearchResult h1, InteractomeSearchResult h2) {
             	
-            	// sorting by score. value = edgeCount*2 + nodeCount
-            	int s1 = h1.getEdgeCount() *2 + h2.getNodeCount();
-            	int s2 = h2.getEdgeCount() *2 + h2.getNodeCount();
+            	// sorting by score. value = edgeCount*3 + nodeCount
+            	int s1 = h1.getEdgeCount() *3 + h2.getNodeCount();
+            	int s2 = h2.getEdgeCount() *3 + h2.getNodeCount();
+            	
             	
             	if (s1>s2) return -1;
             	if (s1 < s2 ) return 1;
@@ -306,12 +308,13 @@ public class NetworkQueryManager {
 
 	private InteractomeSearchResult runQuery(UUID taskId, NetworkShortSummary summary, final Set<Long> nodeIds, List<String> genes,
 			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException, NdexException {
-	   if(summary.getType().equals("i")) {
+	   if(summary.getType().equals("i") && (summary.getEdgeCount() > 60000 ) && 
+			   (summary.getEdgeCount() > 400000 || (summary.getEdgeCount() / summary.getNodeCount()) < 20 )) {
 		   return directQuery(taskId,summary.getUuid(), nodeIds, genes,
 				   status, hitgenes);
 	   }  
 	   
-	   return interConnectQuery(taskId,summary.getUuid(), nodeIds, genes,
+	   return adjacentQuery(taskId,summary.getUuid(), nodeIds, genes,
 				   status, hitgenes);
 	   
 	}
@@ -953,6 +956,122 @@ public class NetworkQueryManager {
 		  return md;
 	}	
 	
+	private static InteractomeSearchResult adjacentQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
+			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException {
+
+		long t1 = Calendar.getInstance().getTimeInMillis();
+
+		Set<Long> edgeIds = new TreeSet<> ();
+		
+		InteractomeSearchResult currentResult;
+		
+		String tmpFileName = App.getWorkingPath() + "/result/" + taskId.toString() + "/tmp_" + netUUIDStr;
+		
+		try (FileOutputStream out = new FileOutputStream (tmpFileName) ) {
+		
+			NdexCXNetworkWriter writer = new NdexCXNetworkWriter(out, true);
+			MetaDataCollection md = prepareMetadata(netUUIDStr) ;
+			writer.start();
+			writer.writeMetadata(md);
+		
+			MetaDataCollection postmd = new MetaDataCollection();
+		
+			writeContextAspect(netUUIDStr, writer, md, postmd);
+
+			Set<Long> finalNodeIds = new TreeSet<> ();
+
+			
+			if (md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
+
+				writer.startAspectFragment(EdgesElement.ASPECT_NAME);
+				writer.openFragment();
+				
+				try (AspectIterator<EdgesElement> ei = new AspectIterator<>(netUUIDStr,
+						EdgesElement.ASPECT_NAME, EdgesElement.class, pathPrefix )) {
+					while (ei.hasNext()) {
+						EdgesElement edge = ei.next();					
+						if (nodeIds.contains(edge.getSource()) || nodeIds.contains(edge.getTarget()) ) {
+							writer.writeElement(edge);
+							edgeIds.add(edge.getId());
+							
+							if (!nodeIds.contains(edge.getSource()))
+								finalNodeIds.add(edge.getSource());
+							else if ( !nodeIds.contains(edge.getTarget()))
+								finalNodeIds.add(edge.getTarget());
+						} 
+					}
+				}
+
+				writer.closeFragment();
+				writer.endAspectFragment();
+				System.out.println("Query returned " + writer.getFragmentLength() + " edges.");
+				
+				MetaDataElement mde = new MetaDataElement(EdgesElement.ASPECT_NAME, mdeVer);
+				mde.setElementCount(Long.valueOf(edgeIds.size() ));
+				mde.setIdCounter(Long.valueOf(edgeIds.isEmpty()? 0L: Collections.max(edgeIds)));
+				postmd.add(mde);
+
+			
+			}
+						
+			finalNodeIds.addAll(nodeIds);
+						
+			status.put(PROGRESS, 20);
+
+			//write nodes
+			writer.startAspectFragment(NodesElement.ASPECT_NAME);
+			writer.openFragment();
+			try (AspectIterator<NodesElement> ei = new AspectIterator<>(netUUIDStr,
+						NodesElement.ASPECT_NAME, NodesElement.class, pathPrefix)) {
+				while (ei.hasNext()) {
+					NodesElement node = ei.next();
+					if (finalNodeIds.contains(Long.valueOf(node.getId()))) {
+							writer.writeElement(node);
+					}
+				}
+			}
+			writer.closeFragment();
+			writer.endAspectFragment();
+			
+			if ( finalNodeIds.size()>0) {
+				MetaDataElement mde1 = new MetaDataElement(NodesElement.ASPECT_NAME,mdeVer);
+				mde1.setElementCount(Long.valueOf(finalNodeIds.size()));
+				mde1.setIdCounter(finalNodeIds.isEmpty()? 0L: Collections.max(finalNodeIds));
+				postmd.add(mde1);
+			}
+			
+			
+			status.put(PROGRESS, 40);
+			currentResult = createResult(netUUIDStr, hitgenes,nodeIds.size() ,edgeIds.size());
+
+			ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<> (2);
+			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasDerivedFrom", netUUIDStr));
+			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasGeneratedBy",
+				"NDEx Interactome Query/v1.1 (Query terms=\""+ genes.stream().collect(Collectors.joining(","))
+				+ "\")"));
+		
+			writeOtherAspectsForSubnetwork(netUUIDStr, finalNodeIds, edgeIds, writer, md, postmd,
+				"Interactome query result on network" , provenanceRecords, nodeIds);
+		
+			status.put(PROGRESS, 95);
+			writer.writeMetadata(postmd);
+			writer.end();
+		}
+		
+		//rename the file 
+		java.nio.file.Path src = Paths.get(tmpFileName);
+		java.nio.file.Path tgt = Paths.get(App.getWorkingPath() + "/result/" + taskId.toString() + "/" + netUUIDStr + ".cx");		
+		Files.move(src, tgt, StandardCopyOption.ATOMIC_MOVE); 				
+		
+		long t2 = Calendar.getInstance().getTimeInMillis();
+        status.put("wallTime", Long.valueOf(t2-t1));
+		accLogger.info("Total " + (t2-t1)/1000f + " seconds. Returned " + edgeIds.size() + " edges and " + nodeIds.size() + " nodes.",
+				new Object[]{});
+		
+		return currentResult;			
+		
+	}
+
 	
 	private static void writeContextAspect(String netUUID, NdexCXNetworkWriter writer, MetaDataCollection md, MetaDataCollection postmd)
 			throws IOException, JsonProcessingException {
