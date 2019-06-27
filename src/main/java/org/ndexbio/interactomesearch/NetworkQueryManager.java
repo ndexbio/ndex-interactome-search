@@ -306,16 +306,21 @@ public class NetworkQueryManager {
 				new Object[]{});
 	} */
 
-	private InteractomeSearchResult runQuery(UUID taskId, NetworkShortSummary summary, final Set<Long> nodeIds, List<String> genes,
+	private static InteractomeSearchResult runQuery(UUID taskId, NetworkShortSummary summary, final Set<Long> nodeIds, List<String> genes,
 			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException, NdexException {
-	   if(summary.getType().equals("i") && (summary.getEdgeCount() > 60000 ) && 
-			   (summary.getEdgeCount() > 400000 || (summary.getEdgeCount() / summary.getNodeCount()) < 20 )) {
-		   return directQuery(taskId,summary.getUuid(), nodeIds, genes,
+	   
+		if(summary.getType().equals("i") ) {
+		   if ( (summary.getEdgeCount() > 60000 ) && 
+				   (summary.getEdgeCount() > 400000 || (summary.getEdgeCount() / summary.getNodeCount()) > 20 ) ) 
+		       return directQuery(taskId,summary.getUuid(), nodeIds, genes,
 				   status, hitgenes);
+		    
+		   return adjacentQuery(taskId,summary.getUuid(), nodeIds, genes,
+					   status, hitgenes, true);
 	   }  
 	   
 	   return adjacentQuery(taskId,summary.getUuid(), nodeIds, genes,
-				   status, hitgenes);
+				   status, hitgenes, false);
 	   
 	}
 
@@ -956,8 +961,22 @@ public class NetworkQueryManager {
 		  return md;
 	}	
 	
+	/**
+	 * This function combines adjacent and neighborhood query together.
+	 * 
+	 * @param taskId
+	 * @param netUUIDStr
+	 * @param nodeIds
+	 * @param genes
+	 * @param status
+	 * @param hitgenes
+	 * @param fullNeighborhood  If true, run the neighborhood query, otherwise run the adjacent query.
+	 * @return
+	 * @throws IOException
+	 */
+	
 	private static InteractomeSearchResult adjacentQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
-			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException {
+			Hashtable<String,Object> status, Set<String> hitgenes, boolean fullNeighborhood) throws IOException {
 
 		long t1 = Calendar.getInstance().getTimeInMillis();
 
@@ -1005,13 +1024,7 @@ public class NetworkQueryManager {
 				writer.closeFragment();
 				writer.endAspectFragment();
 				System.out.println("Query returned " + writer.getFragmentLength() + " edges.");
-				
-				MetaDataElement mde = new MetaDataElement(EdgesElement.ASPECT_NAME, mdeVer);
-				mde.setElementCount(Long.valueOf(edgeIds.size() ));
-				mde.setIdCounter(Long.valueOf(edgeIds.isEmpty()? 0L: Collections.max(edgeIds)));
-				postmd.add(mde);
-
-			
+							
 			}
 						
 			finalNodeIds.addAll(nodeIds);
@@ -1040,7 +1053,32 @@ public class NetworkQueryManager {
 				postmd.add(mde1);
 			}
 			
+			//check if we need to output the full neighborhood.
+			if ( fullNeighborhood && md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
+				writer.startAspectFragment(EdgesElement.ASPECT_NAME);
+				writer.openFragment();
+
+				try (AspectIterator<EdgesElement> ei = new AspectIterator<>( netUUIDStr,EdgesElement.ASPECT_NAME, EdgesElement.class, pathPrefix)) {
+					while (ei.hasNext()) {
+						EdgesElement edge = ei.next();
+						if ( (!edgeIds.contains(edge.getId())) && finalNodeIds.contains(edge.getSource())
+									&& finalNodeIds.contains(edge.getTarget())) {
+								writer.writeElement(edge);
+								edgeIds.add(edge.getId());
+						}
+					}
+				}
+				writer.closeFragment();
+				writer.endAspectFragment();
+			}
 			
+			if  (md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
+				MetaDataElement mde = new MetaDataElement(EdgesElement.ASPECT_NAME,mdeVer);
+				mde.setElementCount((long)edgeIds.size());
+				mde.setIdCounter(edgeIds.isEmpty()? 0L : Collections.max(edgeIds));
+				postmd.add(mde);
+			}
+	
 			status.put(PROGRESS, 40);
 			currentResult = createResult(netUUIDStr, hitgenes,nodeIds.size() ,edgeIds.size());
 
