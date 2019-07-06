@@ -3,7 +3,6 @@ package org.ndexbio.interactomesearch;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -49,6 +48,7 @@ import org.ndexbio.model.cx.NodeCitationLinksElement;
 import org.ndexbio.model.cx.NodeSupportLinksElement;
 import org.ndexbio.model.cx.SupportElement;
 import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.tools.NodeDegreeHelper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
@@ -66,13 +66,16 @@ public class NetworkQueryManager {
 	private static final String mdeVer = "1.0";
 	private static final String PROGRESS = "progress";
 	
+	private static final int edgeLimit = 500;
+	
 	private static String pathPrefix = "/opt/ndex/data/";
 /*	private boolean usingOldVisualPropertyAspect;
-	private int edgeLimit;
 	private boolean errorOverLimit;
 	private boolean directOnly;
 	private String searchTerms; */
 	private GeneSymbolIndexer symbolDB;
+	
+	public enum PPIQueryType {Direct, Interconnect, Neighborhood, Adjacent} 
 	
 	//private static String fsPath;
 	
@@ -310,26 +313,61 @@ public class NetworkQueryManager {
 			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException, NdexException {
 	   
 		if(summary.getType().equals("i") ) {
+		   PPIQueryType startingQueryType = PPIQueryType.Direct;
+		   
 		   if ( (summary.getEdgeCount() > 60000 ) && 
 				   (summary.getEdgeCount() > 400000 || (summary.getEdgeCount() / summary.getNodeCount()) > 20 ) ) 
-		       return directQuery(taskId,summary.getUuid(), nodeIds, genes,
-				   status, hitgenes);
-		    
-		   return adjacentQuery(taskId,summary.getUuid(), nodeIds, genes,
-					   status, hitgenes, true);
+			   startingQueryType = PPIQueryType.Neighborhood;
+			   
+		   return queryPPINetwork(taskId,summary.getUuid(), nodeIds, genes,
+					   status, hitgenes, startingQueryType);
 	   }  
 	   
 	   return adjacentQuery(taskId,summary.getUuid(), nodeIds, genes,
 				   status, hitgenes, false);
 	   
 	}
+	
+	
+	private static InteractomeSearchResult queryPPINetwork(UUID taskId, String networkIdStr, final Set<Long> nodeIds, List<String> genes,
+			Hashtable<String,Object> status, Set<String> hitgenes, PPIQueryType startingType) throws IOException, NdexException {
+		
+		if ( startingType == PPIQueryType.Neighborhood ) {
+			InteractomeSearchResult result = adjacentQuery(taskId,networkIdStr, nodeIds, genes,
+					   status, hitgenes, true);
+			
+			if (result.getEdgeCount() > edgeLimit) {
+				return queryPPINetwork(taskId,networkIdStr, nodeIds, genes, status, hitgenes, PPIQueryType.Interconnect);
+			}
+			return result;
+		}
+		
+		if (startingType == PPIQueryType.Interconnect ) {
+			InteractomeSearchResult result = interConnectQuery(taskId,networkIdStr, nodeIds, genes,
+					   status, hitgenes);
+			
+			if (result.getEdgeCount() > edgeLimit) {
+				return queryPPINetwork(taskId,networkIdStr, nodeIds, genes, status, hitgenes, PPIQueryType.Direct);
+			}
+			return result;
+		}
+		
+		if ( startingType == PPIQueryType.Direct ) {
+			return directQuery(taskId,networkIdStr, nodeIds, genes,
+					   status, hitgenes);
+		}
+		
+		throw new NdexException ("Invalid query type " + startingType.name() + " passed to queryPPINetwork function."); 
+	}
 
 	
-	private  InteractomeSearchResult interConnectQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
+	private static InteractomeSearchResult interConnectQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
 			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException {
 		long t1 = Calendar.getInstance().getTimeInMillis();
-		//Set<Long> edgeIds = new TreeSet<> ();
+		
 		Map<Long, EdgesElement> edgeTable = new TreeMap<> ();
+		Set<Long> finalEdgeIds  ;
+
 
 		//NodeId -> unique neighbor node ids
 		Map<Long,NodeDegreeHelper> nodeNeighborIdTable = new TreeMap<>();
@@ -410,103 +448,118 @@ public class NetworkQueryManager {
 			
 			System.out.println( edgeTable.size()  + " edges after trim.");
 			
-			// write edge aspect 
-			writer.startAspectFragment(EdgesElement.ASPECT_NAME);
-			writer.openFragment();
+			finalEdgeIds = new TreeSet<>(edgeTable.keySet());
+			
+			if (edgeTable.size() > edgeLimit)  {
+				currentResult = createResult(netUUIDStr, hitgenes, finalNodes.size(), edgeTable.size());
+			} else {	
+				// write edge aspect
+				writer.startAspectFragment(EdgesElement.ASPECT_NAME);
+				writer.openFragment();
 
-			// write the edges in the table first
-			if ( edgeTable.size() > 0 ) {
+				// write the edges in the table first
+				if (edgeTable.size() > 0) {
 
-				for (EdgesElement e : edgeTable.values()) {
+					for (EdgesElement e : edgeTable.values()) {
 						writer.writeElement(e);
+					}
+
 				}
-		
-			}
-			// write extra edges that found between the new neighboring nodes.
-		//	int additionalEdgeCnt = 0 ;
-			long finalEdgeIdCounter = edgeTable.isEmpty()? 0L: Collections.max(edgeTable.keySet());
-			
-			if (finalNodes.size()>0 && md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
-				try (AspectIterator<EdgesElement> ei = new AspectIterator<>(netUUIDStr,
-						EdgesElement.ASPECT_NAME, EdgesElement.class, pathPrefix )) {
-					while (ei.hasNext()) {
-						EdgesElement edge = ei.next();					
-						if ((!edgeTable.containsKey( edge.getId())) && 
-								finalNodes.contains(edge.getSource()) && finalNodes.contains(edge.getTarget())) {
-							writer.writeElement(edge);
-							edgeTable.put(edge.getId(), edge);
-							if (edge.getId()>finalEdgeIdCounter) 
-								finalEdgeIdCounter = edge.getId();
+				
+				// write extra edges that found between the new neighboring nodes.
+
+				if (finalNodes.size() > 0 && md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
+					try (AspectIterator<EdgesElement> ei = new AspectIterator<>(netUUIDStr, EdgesElement.ASPECT_NAME,
+							EdgesElement.class, pathPrefix)) {
+						while (ei.hasNext()) {
+							EdgesElement edge = ei.next();
+							if ((!finalEdgeIds.contains(edge.getId())) && finalNodes.contains(edge.getSource())
+									&& finalNodes.contains(edge.getTarget())) {
+								writer.writeElement(edge);
+								finalEdgeIds.add(edge.getId());
+								
+								if (finalEdgeIds.size() > edgeLimit)  {
+									break;
+								}
+							}
 						}
-					}	
-				}
-			}	
-			
-			
-			writer.closeFragment();
-			writer.endAspectFragment();
-			System.out.println("Query returned " + writer.getFragmentLength() + " edges.");
-
-			MetaDataElement mde = new MetaDataElement(EdgesElement.ASPECT_NAME, mdeVer);
-			mde.setElementCount(Long.valueOf(edgeTable.size() ));
-			mde.setIdCounter(Long.valueOf(finalEdgeIdCounter));
-			postmd.add(mde);
-
-			
-			System.out.println ( "done writing out edges.");
-
-			finalNodes.addAll(nodeIds);
-
-			status.put(PROGRESS, 20);
-
-			//write nodes
-			writer.startAspectFragment(NodesElement.ASPECT_NAME);
-			writer.openFragment();
-			try (AspectIterator<NodesElement> ei = new AspectIterator<>(netUUIDStr,
-						NodesElement.ASPECT_NAME, NodesElement.class, pathPrefix)) {
-				while (ei.hasNext()) {
-					NodesElement node = ei.next();
-					if (finalNodes.contains(Long.valueOf(node.getId()))) {
-							writer.writeElement(node);
 					}
 				}
-			}
-			writer.closeFragment();
-			writer.endAspectFragment();
-			if ( nodeIds.size()>0) {
-				MetaDataElement mde1 = new MetaDataElement(NodesElement.ASPECT_NAME,mdeVer);
-				mde1.setElementCount(Long.valueOf(finalNodes.size()));
-				mde1.setIdCounter(nodeIds.isEmpty()? 0L: Collections.max(nodeIds));
-				postmd.add(mde1);
-			}
-			
-			
-			status.put(PROGRESS, 40);
-			currentResult = createResult(netUUIDStr, hitgenes,finalNodes.size() ,edgeTable.size());
 
-			ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<> (2);
-			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasDerivedFrom", netUUIDStr));
-			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasGeneratedBy",
-				"NDEx Interactome Query/v1.1 (Query terms=\""+ genes.stream().collect(Collectors.joining(","))
-				+ "\")"));
-		
-			writeOtherAspectsForSubnetwork(netUUIDStr, finalNodes, edgeTable.keySet(), writer, md, postmd,
-				"Interactome query result on network" , provenanceRecords, nodeIds);
-		
-			status.put(PROGRESS, 95);
-			writer.writeMetadata(postmd);
+				
+				writer.closeFragment();
+				writer.endAspectFragment();
+				System.out.println("Query returned " + writer.getFragmentLength() + " edges.");
+				
+				if (finalEdgeIds.size() > edgeLimit) {
+					currentResult = createResult(netUUIDStr, hitgenes, finalNodes.size(), finalEdgeIds.size());
+				} else {
+
+					MetaDataElement mde = new MetaDataElement(EdgesElement.ASPECT_NAME, mdeVer);
+					mde.setElementCount(Long.valueOf(finalEdgeIds.size()));
+					mde.setIdCounter(Collections.max(finalEdgeIds));
+					postmd.add(mde);
+
+					System.out.println("done writing out edges.");
+
+					finalNodes.addAll(nodeIds);
+
+					status.put(PROGRESS, 20);
+
+					// write nodes
+					writer.startAspectFragment(NodesElement.ASPECT_NAME);
+					writer.openFragment();
+					try (AspectIterator<NodesElement> ei = new AspectIterator<>(netUUIDStr, NodesElement.ASPECT_NAME,
+							NodesElement.class, pathPrefix)) {
+						while (ei.hasNext()) {
+							NodesElement node = ei.next();
+							if (finalNodes.contains(Long.valueOf(node.getId()))) {
+								writer.writeElement(node);
+							}
+						}
+					}
+					writer.closeFragment();
+					writer.endAspectFragment();
+					if (nodeIds.size() > 0) {
+						MetaDataElement mde1 = new MetaDataElement(NodesElement.ASPECT_NAME, mdeVer);
+						mde1.setElementCount(Long.valueOf(finalNodes.size()));
+						mde1.setIdCounter(nodeIds.isEmpty() ? 0L : Collections.max(nodeIds));
+						postmd.add(mde1);
+					}
+
+					status.put(PROGRESS, 40);
+					currentResult = createResult(netUUIDStr, hitgenes, finalNodes.size(), finalEdgeIds.size());
+
+					ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<>(2);
+					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasDerivedFrom", netUUIDStr));
+					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasGeneratedBy",
+							"NDEx Interactome Query/v1.1 (Query terms=\""
+									+ genes.stream().collect(Collectors.joining(",")) + "\")"));
+
+					writeOtherAspectsForSubnetwork(netUUIDStr, finalNodes, finalEdgeIds, writer, md, postmd,
+							"Interactome query result on network", provenanceRecords, nodeIds);
+
+					status.put(PROGRESS, 95);
+					writer.writeMetadata(postmd);
+				}
+			}
 			writer.end();
 		}
 		
-		//rename the file 
 		java.nio.file.Path src = Paths.get(tmpFileName);
-		java.nio.file.Path tgt = Paths.get(App.getWorkingPath() + "/result/" + taskId.toString() + "/" + netUUIDStr + ".cx");		
-		Files.move(src, tgt, StandardCopyOption.ATOMIC_MOVE); 				
-		
-		long t2 = Calendar.getInstance().getTimeInMillis();
-        status.put("wallTime", Long.valueOf(t2-t1));
-		accLogger.info("Total " + (t2-t1)/1000f + " seconds. Returned " + edgeTable.size() + " edges and " + nodeIds.size() + " nodes.",
-				new Object[]{});
+		if (finalEdgeIds.size() > edgeLimit) {
+			src.toFile().delete(); // remove the temp result file
+		} else {
+			//rename the file 
+			java.nio.file.Path tgt = Paths
+					.get(App.getWorkingPath() + "/result/" + taskId.toString() + "/" + netUUIDStr + ".cx");
+			Files.move(src, tgt, StandardCopyOption.ATOMIC_MOVE);
+
+			long t2 = Calendar.getInstance().getTimeInMillis();
+			status.put("wallTime", Long.valueOf(t2 - t1));
+			accLogger.info("Total " + (t2 - t1) / 1000f + " seconds. Returned " + finalEdgeIds.size() + " edges and "
+					+ nodeIds.size() + " nodes.", new Object[] {});
+		}
 		
 		return currentResult;
 	}
@@ -975,141 +1028,163 @@ public class NetworkQueryManager {
 	 * @throws IOException
 	 */
 	
-	private static InteractomeSearchResult adjacentQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
-			Hashtable<String,Object> status, Set<String> hitgenes, boolean fullNeighborhood) throws IOException {
+	private static InteractomeSearchResult adjacentQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds,
+			List<String> genes, Hashtable<String, Object> status, Set<String> hitgenes, boolean fullNeighborhood)
+			throws IOException {
 
 		long t1 = Calendar.getInstance().getTimeInMillis();
 
-		Set<Long> edgeIds = new TreeSet<> ();
-		
+		Set<Long> edgeIds = new TreeSet<>();
+
 		InteractomeSearchResult currentResult;
-		
+
 		String tmpFileName = App.getWorkingPath() + "/result/" + taskId.toString() + "/tmp_" + netUUIDStr;
-		
-		try (FileOutputStream out = new FileOutputStream (tmpFileName) ) {
-		
+
+		try (FileOutputStream out = new FileOutputStream(tmpFileName)) {
+
 			NdexCXNetworkWriter writer = new NdexCXNetworkWriter(out, true);
-			MetaDataCollection md = prepareMetadata(netUUIDStr) ;
+			MetaDataCollection md = prepareMetadata(netUUIDStr);
 			writer.start();
 			writer.writeMetadata(md);
-		
+
 			MetaDataCollection postmd = new MetaDataCollection();
-		
+
 			writeContextAspect(netUUIDStr, writer, md, postmd);
 
-			Set<Long> finalNodeIds = new TreeSet<> ();
+			Set<Long> finalNodeIds = new TreeSet<>();
 
-			
 			if (md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
 
 				writer.startAspectFragment(EdgesElement.ASPECT_NAME);
 				writer.openFragment();
-				
-				try (AspectIterator<EdgesElement> ei = new AspectIterator<>(netUUIDStr,
-						EdgesElement.ASPECT_NAME, EdgesElement.class, pathPrefix )) {
+
+				try (AspectIterator<EdgesElement> ei = new AspectIterator<>(netUUIDStr, EdgesElement.ASPECT_NAME,
+						EdgesElement.class, pathPrefix)) {
 					while (ei.hasNext()) {
-						EdgesElement edge = ei.next();					
-						if (nodeIds.contains(edge.getSource()) || nodeIds.contains(edge.getTarget()) ) {
+						EdgesElement edge = ei.next();
+						if (nodeIds.contains(edge.getSource()) || nodeIds.contains(edge.getTarget())) {
 							writer.writeElement(edge);
 							edgeIds.add(edge.getId());
-							
+
+							// check if it is over the limit
+							if (fullNeighborhood && edgeIds.size() > edgeLimit)
+								break;
+
 							if (!nodeIds.contains(edge.getSource()))
 								finalNodeIds.add(edge.getSource());
-							else if ( !nodeIds.contains(edge.getTarget()))
+							else if (!nodeIds.contains(edge.getTarget()))
 								finalNodeIds.add(edge.getTarget());
-						} 
+						}
 					}
 				}
 
 				writer.closeFragment();
 				writer.endAspectFragment();
 				System.out.println("Query returned " + writer.getFragmentLength() + " edges.");
-							
+
 			}
-						
+
 			finalNodeIds.addAll(nodeIds);
-						
+
 			status.put(PROGRESS, 20);
 
-			//write nodes
-			writer.startAspectFragment(NodesElement.ASPECT_NAME);
-			writer.openFragment();
-			try (AspectIterator<NodesElement> ei = new AspectIterator<>(netUUIDStr,
-						NodesElement.ASPECT_NAME, NodesElement.class, pathPrefix)) {
-				while (ei.hasNext()) {
-					NodesElement node = ei.next();
-					if (finalNodeIds.contains(Long.valueOf(node.getId()))) {
-							writer.writeElement(node);
-					}
-				}
-			}
-			writer.closeFragment();
-			writer.endAspectFragment();
-			
-			if ( finalNodeIds.size()>0) {
-				MetaDataElement mde1 = new MetaDataElement(NodesElement.ASPECT_NAME,mdeVer);
-				mde1.setElementCount(Long.valueOf(finalNodeIds.size()));
-				mde1.setIdCounter(finalNodeIds.isEmpty()? 0L: Collections.max(finalNodeIds));
-				postmd.add(mde1);
-			}
-			
-			//check if we need to output the full neighborhood.
-			if ( fullNeighborhood && md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
-				writer.startAspectFragment(EdgesElement.ASPECT_NAME);
-				writer.openFragment();
+			if (fullNeighborhood && edgeIds.size() > edgeLimit) {  // result too big, we stop now.
+				currentResult = createResult(netUUIDStr, hitgenes, finalNodeIds.size(), edgeIds.size());
+				writer.end();
+			} else {
 
-				try (AspectIterator<EdgesElement> ei = new AspectIterator<>( netUUIDStr,EdgesElement.ASPECT_NAME, EdgesElement.class, pathPrefix)) {
+				// write nodes
+				writer.startAspectFragment(NodesElement.ASPECT_NAME);
+				writer.openFragment();
+				try (AspectIterator<NodesElement> ei = new AspectIterator<>(netUUIDStr, NodesElement.ASPECT_NAME,
+						NodesElement.class, pathPrefix)) {
 					while (ei.hasNext()) {
-						EdgesElement edge = ei.next();
-						if ( (!edgeIds.contains(edge.getId())) && finalNodeIds.contains(edge.getSource())
-									&& finalNodeIds.contains(edge.getTarget())) {
-								writer.writeElement(edge);
-								edgeIds.add(edge.getId());
+						NodesElement node = ei.next();
+						if (finalNodeIds.contains(Long.valueOf(node.getId()))) {
+							writer.writeElement(node);
 						}
 					}
 				}
 				writer.closeFragment();
 				writer.endAspectFragment();
-			}
-			
-			if  (md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
-				MetaDataElement mde = new MetaDataElement(EdgesElement.ASPECT_NAME,mdeVer);
-				mde.setElementCount((long)edgeIds.size());
-				mde.setIdCounter(edgeIds.isEmpty()? 0L : Collections.max(edgeIds));
-				postmd.add(mde);
-			}
-	
-			status.put(PROGRESS, 40);
-			currentResult = createResult(netUUIDStr, hitgenes,nodeIds.size() ,edgeIds.size());
 
-			ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<> (2);
-			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasDerivedFrom", netUUIDStr));
-			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasGeneratedBy",
-				"NDEx Interactome Query/v1.1 (Query terms=\""+ genes.stream().collect(Collectors.joining(","))
-				+ "\")"));
-		
-			writeOtherAspectsForSubnetwork(netUUIDStr, finalNodeIds, edgeIds, writer, md, postmd,
-				"Interactome query result on network" , provenanceRecords, nodeIds);
-		
-			status.put(PROGRESS, 95);
-			writer.writeMetadata(postmd);
-			writer.end();
+				if (finalNodeIds.size() > 0) {
+					MetaDataElement mde1 = new MetaDataElement(NodesElement.ASPECT_NAME, mdeVer);
+					mde1.setElementCount(Long.valueOf(finalNodeIds.size()));
+					mde1.setIdCounter(finalNodeIds.isEmpty() ? 0L : Collections.max(finalNodeIds));
+					postmd.add(mde1);
+				}
+
+				// check if we need to output the full neighborhood.
+				if (fullNeighborhood && md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
+					writer.startAspectFragment(EdgesElement.ASPECT_NAME);
+					writer.openFragment();
+
+					try (AspectIterator<EdgesElement> ei = new AspectIterator<>(netUUIDStr, EdgesElement.ASPECT_NAME,
+							EdgesElement.class, pathPrefix)) {
+						while (ei.hasNext()) {
+							EdgesElement edge = ei.next();
+							if ((!edgeIds.contains(edge.getId())) && finalNodeIds.contains(edge.getSource())
+									&& finalNodeIds.contains(edge.getTarget())) {
+								writer.writeElement(edge);
+								edgeIds.add(edge.getId());
+								
+								if (edgeIds.size() > edgeLimit)
+									break;
+							}
+						}
+					}
+					writer.closeFragment();
+					writer.endAspectFragment();
+				}
+
+				if (md.getMetaDataElement(EdgesElement.ASPECT_NAME) != null) {
+					MetaDataElement mde = new MetaDataElement(EdgesElement.ASPECT_NAME, mdeVer);
+					mde.setElementCount((long) edgeIds.size());
+					mde.setIdCounter(edgeIds.isEmpty() ? 0L : Collections.max(edgeIds));
+					postmd.add(mde);
+				}
+
+				currentResult = createResult(netUUIDStr, hitgenes, finalNodeIds.size(), edgeIds.size());
+				
+				if (!fullNeighborhood || edgeIds.size() <= edgeLimit) {
+
+					status.put(PROGRESS, 40);
+					ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<>(2);
+					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasDerivedFrom", netUUIDStr));
+					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasGeneratedBy",
+							"NDEx Interactome Query/v1.1 (Query terms=\""
+									+ genes.stream().collect(Collectors.joining(",")) + "\")"));
+
+					writeOtherAspectsForSubnetwork(netUUIDStr, finalNodeIds, edgeIds, writer, md, postmd,
+							"Interactome query result on network", provenanceRecords, nodeIds);
+
+					status.put(PROGRESS, 95);
+					writer.writeMetadata(postmd);
+				}
+				writer.end();
+			}
+		}
+
+		java.nio.file.Path src = Paths.get(tmpFileName);
+
+		if (fullNeighborhood && edgeIds.size() > edgeLimit) {
+			src.toFile().delete(); // remove the temp result file
+		} else {
+			// rename the file
+			java.nio.file.Path tgt = Paths
+					.get(App.getWorkingPath() + "/result/" + taskId.toString() + "/" + netUUIDStr + ".cx");
+			Files.move(src, tgt, StandardCopyOption.ATOMIC_MOVE);
+
+			long t2 = Calendar.getInstance().getTimeInMillis();
+			status.put("wallTime", Long.valueOf(t2 - t1));
+			accLogger.info("Total " + (t2 - t1) / 1000f + " seconds. Returned " + edgeIds.size() + " edges.",
+					new Object[] {});
 		}
 		
-		//rename the file 
-		java.nio.file.Path src = Paths.get(tmpFileName);
-		java.nio.file.Path tgt = Paths.get(App.getWorkingPath() + "/result/" + taskId.toString() + "/" + netUUIDStr + ".cx");		
-		Files.move(src, tgt, StandardCopyOption.ATOMIC_MOVE); 				
-		
-		long t2 = Calendar.getInstance().getTimeInMillis();
-        status.put("wallTime", Long.valueOf(t2-t1));
-		accLogger.info("Total " + (t2-t1)/1000f + " seconds. Returned " + edgeIds.size() + " edges and " + nodeIds.size() + " nodes.",
-				new Object[]{});
-		
-		return currentResult;			
-		
-	}
+		return currentResult;
 
+	}
 	
 	private static void writeContextAspect(String netUUID, NdexCXNetworkWriter writer, MetaDataCollection md, MetaDataCollection postmd)
 			throws IOException, JsonProcessingException {
@@ -1132,8 +1207,9 @@ public class NetworkQueryManager {
 			postmd.add(mde);
 		}
 	}
-	
-	private class NodeDegreeHelper {
+
+	/*
+	public class NodeDegreeHelper {
 		
 		private boolean tobeDeleted;
 		private Long nodeId;
@@ -1169,5 +1245,5 @@ public class NetworkQueryManager {
 		public void removeAllEdges() {edgeIds = null;}
 
 	}
-
+*/
 }
