@@ -533,11 +533,11 @@ public class NetworkQueryManager {
 					ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<>(2);
 					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasDerivedFrom", netUUIDStr));
 					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasGeneratedBy",
-							"NDEx Interactome Query/v1.1 (Query terms=\""
+							"NDEx Interconnect Query/v1.1 (Query terms=\""
 									+ genes.stream().collect(Collectors.joining(",")) + "\")"));
 
 					writeOtherAspectsForSubnetwork(netUUIDStr, finalNodes, finalEdgeIds, writer, md, postmd,
-							"Interactome query result on network", provenanceRecords, nodeIds);
+							"Interconnect query result on network", provenanceRecords, nodeIds);
 
 					status.put(PROGRESS, 95);
 					writer.writeMetadata(postmd);
@@ -656,11 +656,11 @@ public class NetworkQueryManager {
 			ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<> (2);
 			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasDerivedFrom", netUUIDStr));
 			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasGeneratedBy",
-				"NDEx Interactome Query/v1.1 (Query terms=\""+ genes.stream().collect(Collectors.joining(","))
+				"NDEx Direct Query/v1.1 (Query terms=\""+ genes.stream().collect(Collectors.joining(","))
 				+ "\")"));
 		
 			writeOtherAspectsForSubnetwork(netUUIDStr, nodeIds, edgeIds, writer, md, postmd,
-				"Interactome query result on network" , provenanceRecords, nodeIds);
+				"Direct query result on network" , provenanceRecords, nodeIds);
 		
 			status.put(PROGRESS, 95);
 			writer.writeMetadata(postmd);
@@ -1151,13 +1151,14 @@ public class NetworkQueryManager {
 
 					status.put(PROGRESS, 40);
 					ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<>(2);
+					String queryName = (fullNeighborhood? "Neighborhood" : "Adjacent");
 					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasDerivedFrom", netUUIDStr));
 					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasGeneratedBy",
-							"NDEx Interactome Query/v1.1 (Query terms=\""
+							"NDEx " + queryName + " Query/v1.1 (Query terms=\""
 									+ genes.stream().collect(Collectors.joining(",")) + "\")"));
 
 					writeOtherAspectsForSubnetwork(netUUIDStr, finalNodeIds, edgeIds, writer, md, postmd,
-							"Interactome query result on network", provenanceRecords, nodeIds);
+							"Interactome "+ queryName+ " query result on network", provenanceRecords, nodeIds);
 
 					status.put(PROGRESS, 95);
 					writer.writeMetadata(postmd);
