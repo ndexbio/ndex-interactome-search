@@ -21,6 +21,7 @@ import org.ndexbio.cxio.core.readers.NiceCXNetworkReader;
 import org.ndexbio.interactomesearch.object.NetworkShortSummary;
 import org.ndexbio.interactomesearch.object.SearchStatus;
 import org.ndexbio.model.cx.NiceCXNetwork;
+import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.rest.client.NdexRestClient;
 import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
@@ -114,7 +115,10 @@ public class App
 	    port = Integer.valueOf(portStr).intValue();
 		ndexServerName = System.getProperty("ndex.host", "public.ndexbio.org");
 		workingPath = System.getProperty("ndex.interactomedb", "/opt/ndex/services/interactome");
+		
+		// geneSearcher needs to be initialized before initialize the dbTable
 		geneSearcher = new GeneSymbolIndexer(workingPath + "/genedb");
+		
 		serviceHost = System.getProperty("ndex.interactomehost", "localhost");
 
 		//remove the old results first
@@ -130,6 +134,13 @@ public class App
 			summary.setEdgeCount(sum.getEdgeCount());
 			summary.setName(sum.getName());
 			summary.setNodeCount(sum.getNodeCount());
+			NdexPropertyValuePair iconURLProp = sum.getPropertyByName("__iconurl");
+			if ( iconURLProp != null ) 
+				summary.setImageURL(iconURLProp.getValue());
+		/*	NdexPropertyValuePair networkType = sum.getPropertyByName("networkType");
+			if ( networkType != null) {
+				List<String> typeList = networkType.
+			} */
 			summary.setURL(ndexServerName+"/network/"+ sum.getExternalId() );
 			dbTable.put(summary.getUuid(), summary);
 		}
