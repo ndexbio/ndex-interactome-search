@@ -15,6 +15,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.RolloverFileOutputStream;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
+import org.ndexbio.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
 import org.ndexbio.cxio.aspects.datamodels.CyVisualPropertiesElement;
 import org.ndexbio.cxio.core.interfaces.AspectElement;
 import org.ndexbio.cxio.core.readers.NiceCXNetworkReader;
@@ -26,6 +27,8 @@ import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.rest.client.NdexRestClient;
 import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
 import org.slf4j.Logger;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.qos.logback.classic.Level;
 
@@ -137,10 +140,21 @@ public class App
 			NdexPropertyValuePair iconURLProp = sum.getPropertyByName("__iconurl");
 			if ( iconURLProp != null ) 
 				summary.setImageURL(iconURLProp.getValue());
-		/*	NdexPropertyValuePair networkType = sum.getPropertyByName("networkType");
-			if ( networkType != null) {
-				List<String> typeList = networkType.
-			} */
+			NdexPropertyValuePair networkType = sum.getPropertyByName("networkType");
+			String listofstr = ATTRIBUTE_DATA_TYPE.LIST_OF_STRING.toString();
+			if ( summary.getType() == null && networkType != null && networkType.getDataType().equals(listofstr)) {
+				ObjectMapper mapper = new ObjectMapper();
+				String[] netTypes = mapper.readValue(networkType.getValue(), String[].class);
+				for (String s : netTypes) {
+					if ( s.equals("ppi") || s.equals("pathway")) {
+						summary.setType("i");
+						break;
+					} else if ( s.equals("geneassociation") || s.equals("proteinassociation")) {
+						summary.setType("a");
+						break;
+					}
+				}
+			} 
 			summary.setURL(ndexServerName+"/network/"+ sum.getExternalId() );
 			dbTable.put(summary.getUuid(), summary);
 		}

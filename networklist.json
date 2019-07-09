@@ -5,21 +5,14 @@
   "imageURL":"http://bioplex.hms.harvard.edu/img/HarvardShieldSizedText.png"
 },
 {
-  "uuid": "38e0d5d9-2be3-11e9-ad04-52495394a1cd",
-  "type": "i",
-  "imageURL":"http://home.ndexbio.org/img/STRING-logo.png"
+  "uuid": "38e0d5d9-2be3-11e9-ad04-52495394a1cd"
 },{
   "uuid": "3935f24f-3eda-11e9-a315-96880dd7c540",
   "type": "i",
   "imageURL":"https://www.inetbio.org/humannet/images/HumanNet_logo_with_title.png"
 },{
   "uuid": "3affe54b-2be3-11e9-ad04-52495394a1cd",
-  "type": "i",
-  "imageURL":"http://home.ndexbio.org/img/biogrid_logo.jpg"
-},{
-  "uuid": "6454bb69-9f82-11e9-80ab-f2777bbed585",
-  "type": "a",
-  "imageURL":"http://home.ndexbio.org/img/biogrid_logo.jpg"
+  "type": "i"
 },{
   "uuid": "571fe004-3eda-11e9-a315-96880dd7c540",
   "type": "i",
@@ -28,5 +21,9 @@
   "uuid": "59e78b87-3eda-11e9-a315-96880dd7c540",
   "type": "i",
   "imageURL":"https://static1.squarespace.com/static/5697c2e5e0327ca6778bc453/t/56b0ea324c2f853cbf6bfa07/1454434874760/?format=1000w"
+} ,{
+   "uuid": "7b54eed4-317c-11e9-8c1d-76b6f4944e63"
+},{
+  "uuid": "fd66fe2d-a266-11e9-82ad-f2777bbed585"
 }
 ]

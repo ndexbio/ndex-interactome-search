@@ -315,8 +315,7 @@ public class NetworkQueryManager {
 		if(summary.getType().equals("i") ) {
 		   PPIQueryType startingQueryType = PPIQueryType.Direct;
 		   
-		   if ( (summary.getEdgeCount() > 60000 ) && 
-				   (summary.getEdgeCount() > 400000 || (summary.getEdgeCount() / summary.getNodeCount()) > 20 ) ) 
+		   if  (summary.getEdgeCount() < 400000 || (summary.getEdgeCount() / summary.getNodeCount()) > 20 ) 
 			   startingQueryType = PPIQueryType.Neighborhood;
 			   
 		   return queryPPINetwork(taskId,summary.getUuid(), nodeIds, genes,

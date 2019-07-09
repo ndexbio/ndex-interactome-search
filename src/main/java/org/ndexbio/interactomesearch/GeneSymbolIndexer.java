@@ -18,11 +18,14 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 import org.h2.jdbcx.JdbcConnectionPool;
+import org.ndexbio.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
+import org.ndexbio.cxio.aspects.datamodels.NetworkAttributesElement;
 import org.ndexbio.cxio.aspects.datamodels.NodeAttributesElement;
 import org.ndexbio.cxio.aspects.datamodels.NodesElement;
 import org.ndexbio.cxio.core.AspectIterator;
 import org.ndexbio.interactomesearch.object.GeneSymbolSearchResult;
 import org.ndexbio.interactomesearch.object.NetworkShortSummary;
+import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.tools.TermUtilities;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -62,9 +65,7 @@ public class GeneSymbolIndexer {
 			}
 	    }
 	    
-	    pathPrefix = NetworkQueryManager.getDataFilePathPrefix();
-	    
-	    
+	    pathPrefix = NetworkQueryManager.getDataFilePathPrefix();    
 	}
 	
 	private void setPathPrefix(String pathPrefix) { this.pathPrefix = pathPrefix;}
@@ -102,8 +103,12 @@ public class GeneSymbolIndexer {
         int net_id;
 		try ( Connection conn = cp.getConnection()) {
 	        
-	        conn.createStatement().execute("insert into networks (net_uuid, type, imageurl) values('"+networkUUID+"','"+
-	        		networkType +  "','" + imageURL + "')");
+	        String sqlStr = "insert into networks (net_uuid, type, imageurl) values('"+networkUUID+"',?,?)";
+			try (PreparedStatement pst = conn.prepareStatement(sqlStr)) {
+				pst.setString(1,networkType);
+				pst.setString(2,imageURL);
+				pst.executeUpdate();
+			}
 	        conn.commit();
 	        try (ResultSet r = conn.createStatement().executeQuery("select net_id from networks where net_uuid='"+networkUUID+"'")) {
 	        	if ( r.next()) {
@@ -160,9 +165,12 @@ public class GeneSymbolIndexer {
 	    }
 
 	    System.out.println ("Total " + nodeTable.size() + " nodes after first scan.");
+
+	    List<String> netTypes = getNetworkTypes(netIDStr);
+	    boolean isAssociationNetwork = netTypes != null && 
+	    		(netTypes.contains("geneassocation") || netTypes.contains("proteinassociation"));
 	    
-	    
-	    if ( networkType.equals("a") ) {   // non-typed node in association network
+	    if ( isAssociationNetwork || (networkType != null && networkType.equals("a"))) {   // non-typed node in association network
 	    	nodeTable.entrySet() 
             .removeIf( 
                 entry -> (entry.getValue().get("t") == null));
@@ -254,6 +262,18 @@ public class GeneSymbolIndexer {
 		return r;
 	} 
 	
+	
+	private List<String> getNetworkTypes (String networkIdStr) throws JsonProcessingException, IOException {
+	    try (AspectIterator<NetworkAttributesElement> ni = new AspectIterator<>( networkIdStr,NetworkAttributesElement.ASPECT_NAME, NetworkAttributesElement.class, pathPrefix))  {
+			while (ni.hasNext()) {
+				NetworkAttributesElement attr = ni.next();
+				if ( attr.getName().equals("networkType") && attr.getDataType() == ATTRIBUTE_DATA_TYPE.LIST_OF_STRING) {
+					return attr.getValues();
+				}
+			}
+	    }
+	    return null;
+	}
 	
 	/**
 	 * 
