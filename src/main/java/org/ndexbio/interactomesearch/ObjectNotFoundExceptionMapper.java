@@ -18,7 +18,7 @@ public class ObjectNotFoundExceptionMapper implements ExceptionMapper<ObjectNotF
     	MDC.put("error", exception.getMessage());
     	logger.error("SERVER ERROR:", exception);
         return Response
-            .status(Status.BAD_REQUEST)
+            .status(Status.NOT_FOUND)
             .entity(exception.getNdexExceptionInJason())
             .type("application/json")
             .build();
