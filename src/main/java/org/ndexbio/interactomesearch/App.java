@@ -155,6 +155,10 @@ public class App
 					}
 				}
 			} 
+			if (summary.getType() == null) {
+				throw new Exception ("Network Type of Network " + summary.getUuid() + " is not valid for Interactome search.");
+			}
+			
 			summary.setURL(ndexServerName+"/network/"+ sum.getExternalId() );
 			dbTable.put(summary.getUuid(), summary);
 		}

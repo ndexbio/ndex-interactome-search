@@ -312,7 +312,11 @@ public class NetworkQueryManager {
 	private static InteractomeSearchResult runQuery(UUID taskId, NetworkShortSummary summary, final Set<Long> nodeIds, List<String> genes,
 			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException, NdexException {
 	   
-		if(summary.getType().equals("i") ) {
+		String netType = summary.getType();
+		if ( netType == null) 
+			accLogger.warn("Network " + summary.getUuid()+ " has no type on it.");
+		
+		if( netType!= null && netType.equals("i") ) {
 		   PPIQueryType startingQueryType = PPIQueryType.Direct;
 		   
 		   if  (summary.getEdgeCount() < 400000 || (summary.getEdgeCount() / summary.getNodeCount()) > 20 ) 
