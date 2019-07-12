@@ -1157,11 +1157,11 @@ public class NetworkQueryManager {
 					String queryName = (fullNeighborhood? "Neighborhood" : "Adjacent");
 					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasDerivedFrom", netUUIDStr));
 					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasGeneratedBy",
-							"NDEx " + queryName + " Query/v1.1 (Query terms=\""
+							queryName + " Query/v1.1 (Query terms=\""
 									+ genes.stream().collect(Collectors.joining(",")) + "\")"));
 
 					writeOtherAspectsForSubnetwork(netUUIDStr, finalNodeIds, edgeIds, writer, md, postmd,
-							"Interactome "+ queryName+ " query result on network", provenanceRecords, nodeIds);
+							 queryName+ " query result on network", provenanceRecords, nodeIds);
 
 					status.put(PROGRESS, 95);
 					writer.writeMetadata(postmd);
