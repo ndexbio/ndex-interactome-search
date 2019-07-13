@@ -160,7 +160,7 @@ public class NetworkQueryManager {
             }
         });
         
-        int i = 1 ;
+        int i = 0 ;
         for (InteractomeSearchResult ele : resultList ) {
         	ele.setRank(i++);
         }
