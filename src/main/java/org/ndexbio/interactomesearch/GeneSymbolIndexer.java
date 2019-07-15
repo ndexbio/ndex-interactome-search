@@ -25,7 +25,6 @@ import org.ndexbio.cxio.aspects.datamodels.NodesElement;
 import org.ndexbio.cxio.core.AspectIterator;
 import org.ndexbio.interactomesearch.object.GeneSymbolSearchResult;
 import org.ndexbio.interactomesearch.object.NetworkShortSummary;
-import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.tools.TermUtilities;
 
 import com.fasterxml.jackson.core.JsonProcessingException;

@@ -1,12 +1,9 @@
 package org.ndexbio.interactomesearch;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.PrintStream;
-import java.util.Collection;
 import java.util.Hashtable;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Server;
@@ -14,14 +11,11 @@ import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.RolloverFileOutputStream;
+import org.eclipse.jetty.util.log.Log;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.ndexbio.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
-import org.ndexbio.cxio.aspects.datamodels.CyVisualPropertiesElement;
-import org.ndexbio.cxio.core.interfaces.AspectElement;
-import org.ndexbio.cxio.core.readers.NiceCXNetworkReader;
 import org.ndexbio.interactomesearch.object.NetworkShortSummary;
 import org.ndexbio.interactomesearch.object.SearchStatus;
-import org.ndexbio.model.cx.NiceCXNetwork;
 import org.ndexbio.model.object.NdexPropertyValuePair;
 import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.rest.client.NdexRestClient;
@@ -31,8 +25,6 @@ import org.slf4j.Logger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.qos.logback.classic.Level;
-
-import org.eclipse.jetty.util.log.Log;
 
 /**
  *
@@ -156,6 +148,7 @@ public class App
 				}
 			} 
 			if (summary.getType() == null) {
+				logStream.close();
 				throw new Exception ("Network Type of Network " + summary.getUuid() + " is not valid for Interactome search.");
 			}
 			
