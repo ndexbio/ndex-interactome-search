@@ -500,7 +500,7 @@ public class NetworkQueryManager {
 
 					MetaDataElement mde = new MetaDataElement(EdgesElement.ASPECT_NAME, mdeVer);
 					mde.setElementCount(Long.valueOf(finalEdgeIds.size()));
-					mde.setIdCounter(Collections.max(finalEdgeIds));
+					mde.setIdCounter((finalEdgeIds.size() == 0 ? Long.valueOf(0) : Collections.max(finalEdgeIds)));
 					postmd.add(mde);
 
 					System.out.println("done writing out edges.");
