@@ -1,9 +1,15 @@
 package org.ndexbio.interactomesearch;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Hashtable;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Server;
@@ -23,6 +29,11 @@ import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
 import org.slf4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 
 import ch.qos.logback.classic.Level;
 
@@ -44,9 +55,54 @@ public class App
 	 private static final Hashtable<String, NetworkShortSummary> dbTable = new Hashtable<>();
 	 
 	// private static Collection<AspectElement> templateStyles;
+	 	
+	 // task ID to status table. In sync with the geneSetSearch cache by RemovalListener
+	 private static final Hashtable<UUID, SearchStatus> statusTable = new Hashtable<>();
 	 
-	 // task ID to status table
-	 private static final Hashtable<UUID, SearchStatus> statusTable = new Hashtable<>();  
+	 private static RemovalListener<Set<String>, UUID> removalListener = new RemovalListener<Set<String>, UUID>() {
+		 @Override
+		public void onRemoval(RemovalNotification<Set<String>, UUID> removal) {
+			    UUID taskId = removal.getValue();
+			    App.getStatusTable().remove(taskId);
+			    // remove the directory from file system.
+				File resultDir =  new File(App.getWorkingPath() + "/result/" + taskId.toString());
+				try {
+					FileUtils.deleteDirectory(resultDir);
+				} catch (IOException e) {
+				  	Log.getRootLogger().warn("Failed to remove result director for " + 
+					   taskId.toString() );
+					e.printStackTrace();
+
+				}
+			  }
+			};	 
+	 
+	 // gene set to taskID cache
+	 private static final LoadingCache<Set<String>,UUID> geneSetSearchCache =
+			 CacheBuilder.newBuilder().initialCapacity(100)
+			 .maximumSize(100)
+			 .removalListener(removalListener)
+			 .build(
+				new CacheLoader<Set<String>,UUID>() {
+					@Override
+					public UUID load (Set<String> geneSet) throws IOException {
+						UUID taskId = UUID.nameUUIDFromBytes(geneSet.stream().
+								collect(Collectors.joining(",")).getBytes());
+						java.nio.file.Path path =  Paths.get(App.getWorkingPath() + "/result/" + taskId.toString());
+						Files.createDirectories(path);
+							  // add entry to the status table
+						SearchStatus st = new SearchStatus();
+						st.setStatus(SearchStatus.submitted);
+						App.getStatusTable().put(taskId, st);
+			
+						SearchWorkerThread t = new SearchWorkerThread(geneSet, taskId, st);
+						t.start();
+						
+						return taskId;
+					}
+				}
+			 )		;  
+	 
 	 
 	  public App() {}
 
@@ -57,6 +113,9 @@ public class App
 	  public static String getServiceHost() {return serviceHost;}
 	  public static int getPort() { return port;}
 	  public static Hashtable<String, NetworkShortSummary> getDBTable() { return dbTable;}
+	  public static UUID getTaskIdFromCache(Set<String> queryGeneSet) throws ExecutionException {
+		  return geneSetSearchCache.get(queryGeneSet);
+	  }
 	  
 	/*  public static Collection<AspectElement> getVisualSytleTemplate() {
 		  return templateStyles;
@@ -200,4 +259,12 @@ public class App
 	    server.join();
 	    
 	  } 
+	  
+	/*	private synchronized static boolean createDirIfNotExists(java.nio.file.Path path) throws IOException {
+			if (Files.exists(path)) 
+				return false;
+
+			Files.createDirectories(path);
+			return true;
+		} */
 }

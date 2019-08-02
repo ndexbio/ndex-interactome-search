@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.eclipse.jetty.util.log.Log;
@@ -94,7 +95,7 @@ public class NetworkQueryManager {
 	
 	//public static void setFsPath(String workingDir) {fsPath = workingDir;}
 	
-	public void search(List<String> genes, UUID taskId) throws SQLException, IOException, NdexException {
+	public void search(Set<String> genes, UUID taskId) throws SQLException, IOException, NdexException, ExecutionException {
 
 		long t1 = Calendar.getInstance().getTimeInMillis();
 
@@ -309,7 +310,7 @@ public class NetworkQueryManager {
 				new Object[]{});
 	} */
 
-	private static InteractomeSearchResult runQuery(UUID taskId, NetworkShortSummary summary, final Set<Long> nodeIds, List<String> genes,
+	private static InteractomeSearchResult runQuery(UUID taskId, NetworkShortSummary summary, final Set<Long> nodeIds, Set<String> genes,
 			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException, NdexException {
 	   
 		String netType = summary.getType();
@@ -332,7 +333,7 @@ public class NetworkQueryManager {
 	}
 	
 	
-	private static InteractomeSearchResult queryPPINetwork(UUID taskId, String networkIdStr, final Set<Long> nodeIds, List<String> genes,
+	private static InteractomeSearchResult queryPPINetwork(UUID taskId, String networkIdStr, final Set<Long> nodeIds, Set<String> genes,
 			Hashtable<String,Object> status, Set<String> hitgenes, PPIQueryType startingType) throws IOException, NdexException {
 		
 		if ( startingType == PPIQueryType.Neighborhood ) {
@@ -364,7 +365,7 @@ public class NetworkQueryManager {
 	}
 
 	
-	private static InteractomeSearchResult interConnectQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
+	private static InteractomeSearchResult interConnectQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, Set<String> genes,
 			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException {
 		long t1 = Calendar.getInstance().getTimeInMillis();
 		
@@ -583,7 +584,7 @@ public class NetworkQueryManager {
 	}
 
 	
-	private static InteractomeSearchResult directQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, List<String> genes,
+	private static InteractomeSearchResult directQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds, Set<String> genes,
 			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException {
 		long t1 = Calendar.getInstance().getTimeInMillis();
 		Set<Long> edgeIds = new TreeSet<> ();
@@ -1032,7 +1033,7 @@ public class NetworkQueryManager {
 	 */
 	
 	private static InteractomeSearchResult adjacentQuery(UUID taskId, String netUUIDStr, final Set<Long> nodeIds,
-			List<String> genes, Hashtable<String, Object> status, Set<String> hitgenes, boolean fullNeighborhood)
+			Set<String> genes, Hashtable<String, Object> status, Set<String> hitgenes, boolean fullNeighborhood)
 			throws IOException {
 
 		long t1 = Calendar.getInstance().getTimeInMillis();

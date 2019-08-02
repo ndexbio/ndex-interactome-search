@@ -12,7 +12,9 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
@@ -75,26 +77,14 @@ public class MessageResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response  interactomeSearch(
 			final List<String> geneList
-			) throws IOException, URISyntaxException {
+			) throws IOException, URISyntaxException, ExecutionException {
 		
 		//Log.getRootLogger().info("Interconnect Query term: " + queryParameters.getSearchString());
 
-		List<String> uppercasedList = geneList.stream().map(e -> e.toUpperCase()).collect(Collectors.toList());
-		UUID taskId = UUID.nameUUIDFromBytes(uppercasedList.stream().
-				collect(Collectors.joining(",")).getBytes());
+		Set<String> uppercasedGeneSet = geneList.stream().map(e -> e.toUpperCase()).collect(Collectors.toSet());
 		
-		java.nio.file.Path path =  Paths.get(App.getWorkingPath() + "/result/" + taskId.toString());
-
-		if (createDirIfNotExists(path)) {
-		  // add entry to the status table
-		  SearchStatus st = new SearchStatus();
-		  App.getStatusTable().put(taskId, st);
-		  st.setStatus(SearchStatus.submitted);
-		  
-		  //kick start the search.	
-		  SearchWorkerThread t = new SearchWorkerThread(uppercasedList, taskId);
-		  t.start();
-		}	
+		UUID taskId = App.getTaskIdFromCache(uppercasedGeneSet);
+		
 		String url = "http://"+App.getServiceHost()  +":"+App.getPort() + "/interactome/v1/search/" + taskId + "/status";
 		
 	    Hashtable<String,String> result = new Hashtable<>();
@@ -182,7 +172,7 @@ public class MessageResource {
 
 	}
 	
-	
+/*	
 	private class SearchWorkerThread extends Thread {
 		private UUID taskId;
 		private List<String> geneList;
@@ -206,7 +196,7 @@ public class MessageResource {
 			} 
 		}
 		
-	}
+	} */
 	
 	@GET
 	@Path("/search/{taskId}/overlaynetwork")

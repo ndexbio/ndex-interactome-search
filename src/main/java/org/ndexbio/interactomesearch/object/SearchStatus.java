@@ -6,6 +6,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -25,13 +26,13 @@ public class SearchStatus {
 	private int numberOfHits;
 	private int start;
 	private int size;
-	private List<String> query;
+	private Set<String> query;
 	private Set<String> hitGenes;
 	
 	private Hashtable<String, Map<String, Object>> sources;
     
 	public SearchStatus() {
-		setQuery(new ArrayList<>(50));
+		setQuery(new TreeSet<>());
 		setSources(new Hashtable<>(60));
 		setHitGenes(new HashSet<>(20));
 		progress  = 0;
@@ -94,11 +95,11 @@ public class SearchStatus {
 		this.size = size;
 	}
 
-	public List<String> getQuery() {
+	public Set<String> getQuery() {
 		return query;
 	}
 
-	public void setQuery(List<String> query) {
+	public void setQuery(Set<String> query) {
 		this.query = query;
 	}
 
