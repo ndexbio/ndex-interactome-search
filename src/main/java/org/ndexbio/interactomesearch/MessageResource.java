@@ -81,9 +81,11 @@ public class MessageResource {
 		
 		//Log.getRootLogger().info("Interconnect Query term: " + queryParameters.getSearchString());
 
-		Set<String> uppercasedGeneSet = geneList.stream().map(e -> e.toUpperCase()).collect(Collectors.toSet());
+		// convert the list into a set, uppercase gene symbols and trim the whitespace. Also remove empty elements.
+		Set<String> normalizedGeneSet = geneList.stream().map(e -> e.toUpperCase())
+				.map( e -> e.trim()).filter(e -> e.length()>0).collect(Collectors.toSet());
 		
-		UUID taskId = App.getTaskIdFromCache(uppercasedGeneSet);
+		UUID taskId = App.getTaskIdFromCache(normalizedGeneSet);
 		
 		String url = "http://"+App.getServiceHost()  +":"+App.getPort() + "/interactome/v1/search/" + taskId + "/status";
 		
