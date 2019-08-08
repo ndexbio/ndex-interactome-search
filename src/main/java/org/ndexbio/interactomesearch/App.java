@@ -51,6 +51,7 @@ public class App
 	 private static String workingPath;  // working directory of this service.
 	 private static String serviceHost;  // host name of this service
 	 private static int port;    //service port.
+	 private static int resultCacheSize = 500;
 	 
 	 private static final Hashtable<String, NetworkShortSummary> dbTable = new Hashtable<>();
 	 
@@ -79,8 +80,8 @@ public class App
 	 
 	 // gene set to taskID cache
 	 private static final LoadingCache<Set<String>,UUID> geneSetSearchCache =
-			 CacheBuilder.newBuilder().initialCapacity(100)
-			 .maximumSize(100)
+			 CacheBuilder.newBuilder().initialCapacity(resultCacheSize)
+			 .maximumSize(resultCacheSize)
 			 .removalListener(removalListener)
 			 .build(
 				new CacheLoader<Set<String>,UUID>() {
