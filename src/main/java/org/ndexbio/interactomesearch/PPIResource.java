@@ -35,8 +35,8 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 
 
-@Path("/v1")
-public class MessageResource {
+@Path("/ppi/v1")
+public class PPIResource {
 	
 
 	@SuppressWarnings("static-method")

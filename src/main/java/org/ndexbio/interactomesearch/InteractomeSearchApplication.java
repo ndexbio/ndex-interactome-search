@@ -11,7 +11,8 @@ public class InteractomeSearchApplication extends Application {
     	 private final Set<Object> _providers = new HashSet<>();
 
 	  public InteractomeSearchApplication() {
-		  _providers.add(new MessageResource());
+		  _providers.add(new PPIResource());
+		  _providers.add(new GeneAssociationResource());
 		 
 	        _providers.add(new NdexDefaultResponseFilter());
 	        _providers.add(new DefaultExceptionMapper());

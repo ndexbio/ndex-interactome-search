@@ -24,6 +24,8 @@ import org.ndexbio.cxio.aspects.datamodels.NodeAttributesElement;
 import org.ndexbio.cxio.aspects.datamodels.NodesElement;
 import org.ndexbio.cxio.core.AspectIterator;
 import org.ndexbio.interactomesearch.object.GeneSymbolSearchResult;
+import org.ndexbio.interactomesearch.object.InteractomeNetworkEntry;
+import org.ndexbio.interactomesearch.object.InteractomeNetworkSet;
 import org.ndexbio.interactomesearch.object.NetworkShortSummary;
 import org.ndexbio.model.tools.TermUtilities;
 
@@ -39,25 +41,36 @@ public class GeneSymbolIndexer {
 	
 	private String pathPrefix;
 	
+	private String networkType; // should be unique across the application because it is used to as a suffix of table name 
+	
 	private TreeMap<Integer, NetworkShortSummary> netIdMapper;
-		   
-	public GeneSymbolIndexer(String dbpath) throws SQLException {
+	
+	/**
+	 * 
+	 * @param dbpath
+	 * @param networkType should be a short alphabetical string. Currently the valid value should only be 
+	 * 'i' for PPI networks or 'a' for geneAssociation networks.
+	 * @throws SQLException
+	 */
+	public GeneSymbolIndexer(String dbpath, String networkType) throws SQLException {
+		
+		this.networkType = networkType;
+		
 		netIdMapper = new TreeMap<>();
 		cp = JdbcConnectionPool.create("jdbc:h2:" + dbpath, "sa", "sa");
 	    try ( Connection conn = cp.getConnection()) {
-	        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS NETWORKS (NET_ID INT auto_increment PRIMARY KEY, "
-	        		+ "NET_UUID VARCHAR(36) UNIQUE, type varchar(10), imageurl varchar(500))");
-	        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS GENESYMBOLS (SYMBOL VARCHAR(30),NODE_ID BIGINT, NET_ID INT, "+
+	        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS NETWORKS_" + networkType + " (NET_ID INT auto_increment PRIMARY KEY, "
+	        		+ "NET_UUID VARCHAR(36) UNIQUE, imageurl varchar(500))");
+	        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS GENESYMBOLS_" + networkType + " (SYMBOL VARCHAR(30),NODE_ID BIGINT, NET_ID INT, "+
 	                  "PRIMARY KEY (SYMBOL,NODE_ID,NET_ID), FOREIGN KEY(NET_ID) REFERENCES NETWORKS(NET_ID))");
 
 	        // populate the id mapping table
-	        try (PreparedStatement p = conn.prepareStatement("select net_id, net_uuid, type, imageurl from networks")) {
+	        try (PreparedStatement p = conn.prepareStatement("select net_id, net_uuid,imageurl from networks_" + networkType)) {
 				try ( ResultSet rs = p.executeQuery()) {
 					while ( rs.next()) {
 					  NetworkShortSummary summary = new NetworkShortSummary();
 					  summary.setUuid(rs.getString(2));
-					  summary.setType(rs.getString(3));
-					  summary.setImageURL(rs.getString(4));
+					  summary.setImageURL(rs.getString(3));
 					  netIdMapper.put(Integer.valueOf(rs.getInt(1)), summary );
 					}
 				}
@@ -93,7 +106,7 @@ public class GeneSymbolIndexer {
 	 * @throws JsonProcessingException
 	 * @throws IOException
 	 */
-	public void rebuildIndex(UUID networkUUID, String networkType, String imageURL) throws SQLException, JsonProcessingException, IOException {
+	public void rebuildIndex(UUID networkUUID, String imageURL) throws SQLException, JsonProcessingException, IOException {
 		
 		System.out.println("Rebuild Index on network " + networkUUID);
 		
@@ -102,14 +115,13 @@ public class GeneSymbolIndexer {
         int net_id;
 		try ( Connection conn = cp.getConnection()) {
 	        
-	        String sqlStr = "insert into networks (net_uuid, type, imageurl) values('"+networkUUID+"',?,?)";
+	        String sqlStr = "insert into networks_" + networkType + " (net_uuid, imageurl) values('"+networkUUID+"',?)";
 			try (PreparedStatement pst = conn.prepareStatement(sqlStr)) {
-				pst.setString(1,networkType);
-				pst.setString(2,imageURL);
+				pst.setString(1,imageURL);
 				pst.executeUpdate();
 			}
 	        conn.commit();
-	        try (ResultSet r = conn.createStatement().executeQuery("select net_id from networks where net_uuid='"+networkUUID+"'")) {
+	        try (ResultSet r = conn.createStatement().executeQuery("select net_id from networks_" + networkType + " where net_uuid='"+networkUUID+"'")) {
 	        	if ( r.next()) {
 	        		net_id = r.getInt(1);
 	        	} else {
@@ -209,14 +221,14 @@ public class GeneSymbolIndexer {
 	    System.out.println (count + " genes indexed. Done.");
 	}
 	
-	private static void insertGeneSymbol(Connection conn, String gene,Long nodeId, int netId) throws SQLException {
+	private void insertGeneSymbol(Connection conn, String gene,Long nodeId, int netId) throws SQLException {
 		
 		// quick hack to prevent errors because the networks have not been normalized yet. 
 		if ( gene.length()>30 || ( ! gene.matches ("^[^\\(\\)\\s,']+$") )) {
 			System.err.println("Warning: gene symbol '" + gene + "' doesn't look correct, ignoring it.");
 			return;
 		}
-		String sqlStr = "insert into genesymbols (SYMBOL, node_id, net_id) values (?, ?,"+netId + ")";
+		String sqlStr = "insert into genesymbols_" + networkType + " (SYMBOL, node_id, net_id) values (?, ?,"+netId + ")";
 		try (PreparedStatement pst = conn.prepareStatement(sqlStr)) {
 			pst.setString(1, gene.toUpperCase());
 			pst.setLong(2, nodeId);
@@ -226,9 +238,9 @@ public class GeneSymbolIndexer {
 	
 	public void removeIndex(UUID networkUUID) throws SQLException {
 		try ( Connection conn = cp.getConnection()) {
-	        conn.createStatement().execute("delete from genesymbols where net_id =(select net_id from networks where net_uuid='"+networkUUID+"')");
+	        conn.createStatement().execute("delete from genesymbols_"+networkType + " where net_id =(select net_id from networks_"+networkType + " where net_uuid='"+networkUUID+"')");
 	        
-	        conn.createStatement().execute("delete from NETWORKS where NET_UUID ='"+networkUUID+"'");
+	        conn.createStatement().execute("delete from NETWORKS_"+networkType + " where NET_UUID ='"+networkUUID+"'");
 	        conn.commit();
 	    }	
 		Optional<Map.Entry<Integer, NetworkShortSummary>> e =
@@ -287,26 +299,33 @@ public class GeneSymbolIndexer {
 	public static void main(String... args) throws Exception {
 		
 		if ( args.length == 3 ) {
-			GeneSymbolIndexer db = new GeneSymbolIndexer(args[0]);
-			db.setPathPrefix(args[1]);
 				
 			try (FileInputStream inputStream = new FileInputStream(args[2])) {
 				  //   Type sooper = getClass().getGenericSuperclass();
-				     
-				Iterator<Hashtable<String,String>> it = new ObjectMapper().readerFor(TypeFactory.defaultInstance().constructMapLikeType(Hashtable.class,String.class, String.class))
-							.readValues(inputStream);
+				ObjectMapper om = new ObjectMapper();
+				InteractomeNetworkSet dataSet = om.readValue(inputStream, InteractomeNetworkSet.class);
 				
-				while(it.hasNext()) {
-					Hashtable<String,String> s = it.next();
-					db.rebuildIndex(UUID.fromString(s.get("uuid")), s.get("type"), s.get("imageURL"));
+				GeneSymbolIndexer db1 = new GeneSymbolIndexer(args[0], "i");     
+				db1.setPathPrefix(args[1]);
+				for (InteractomeNetworkEntry entry: dataSet.getPpiNetworks()) {
+					db1.rebuildIndex(UUID.fromString(entry.getUuid()), entry.getImageURL());
 				}
+				db1.shutdown();
+				
+				
+				GeneSymbolIndexer db2 = new GeneSymbolIndexer(args[0],"a");
+				db2.setPathPrefix(args[1]);
+				for (InteractomeNetworkEntry entry: dataSet.getAssociationNetworks()) {
+					db2.rebuildIndex(UUID.fromString(entry.getUuid()), entry.getImageURL());
+				}
+				db2.shutdown();
+
 			}
 				
-			db.shutdown();
 		} else if (args.length == 5) {
-			GeneSymbolIndexer db = new GeneSymbolIndexer(args[0]);
+			GeneSymbolIndexer db = new GeneSymbolIndexer(args[0], args[3]);
 			db.setPathPrefix(args[1]);
-			db.rebuildIndex(UUID.fromString(args[2]), args[3], args[4]);
+			db.rebuildIndex(UUID.fromString(args[2]), args[4]);
 			db.shutdown();
 			
 		} else {

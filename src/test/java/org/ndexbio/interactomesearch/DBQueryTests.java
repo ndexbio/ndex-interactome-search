@@ -1,4 +1,4 @@
-package org.ndexbio;
+package org.ndexbio.interactomesearch;
 
 import static org.junit.Assert.*;
 
@@ -14,6 +14,7 @@ import org.ndexbio.interactomesearch.object.GeneSymbolSearchResult;
 
 public class DBQueryTests {
 
+	/*
 	@Test
 	public void test() throws SQLException {
 		GeneSymbolIndexer db = new GeneSymbolIndexer("/opt/ndex/services/interactome/genedb");
@@ -43,5 +44,5 @@ public class DBQueryTests {
          
          
 	}
-
+   */
 }

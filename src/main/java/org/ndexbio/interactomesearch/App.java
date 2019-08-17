@@ -47,13 +47,18 @@ public class App
 	 static final String APPLICATION_PATH = "/interactome";
 	 static final String CONTEXT_ROOT = "/";
 	 private static String ndexServerName;   //Ndex server host which has these interactome networks
+
 	 private static GeneSymbolIndexer geneSearcher;
+	 private static GeneSymbolIndexer geneSearcherAssociation;
+	 
 	 private static String workingPath;  // working directory of this service.
 	 private static String serviceHost;  // host name of this service
 	 private static int port;    //service port.
-	 private static int resultCacheSize = 500;
+
+	 private static int resultCacheSize = 600;
 	 
 	 private static final Hashtable<String, NetworkShortSummary> dbTable = new Hashtable<>();
+	 private static final Hashtable<String, NetworkShortSummary> dbTableAssociation = new Hashtable<>();
 	 
 	// private static Collection<AspectElement> templateStyles;
 	 	
@@ -110,6 +115,7 @@ public class App
 	  public static Hashtable<UUID,SearchStatus> getStatusTable() { return statusTable;}
 	  //public static String getHostName() { return ndexServerName;}
 	  public static GeneSymbolIndexer getGeneSearcher() { return geneSearcher;}
+	  public static GeneSymbolIndexer getGeneSearcherAssociation() { return geneSearcherAssociation;}
 	  public static String getWorkingPath() {return workingPath;}
 	  public static String getServiceHost() {return serviceHost;}
 	  public static int getPort() { return port;}
@@ -172,7 +178,8 @@ public class App
 		workingPath = System.getProperty("ndex.interactomedb", "/opt/ndex/services/interactome");
 		
 		// geneSearcher needs to be initialized before initialize the dbTable
-		geneSearcher = new GeneSymbolIndexer(workingPath + "/genedb");
+		geneSearcher = new GeneSymbolIndexer(workingPath + "/genedb", "i");
+		geneSearcherAssociation = new GeneSymbolIndexer(workingPath + "/genedb", "a");
 		
 		serviceHost = System.getProperty("ndex.interactomehost", "localhost");
 
