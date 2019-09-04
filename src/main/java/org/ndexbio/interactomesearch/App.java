@@ -48,24 +48,24 @@ public class App
 	 static final String CONTEXT_ROOT = "/";
 	 private static String ndexServerName;   //Ndex server host which has these interactome networks
 
-	 private static GeneSymbolIndexer geneSearcher;
-	 private static GeneSymbolIndexer geneSearcherAssociation;
+	 private static GeneQueryService interactionService;
+	 private static GeneQueryService associationService;
 	 
 	 private static String workingPath;  // working directory of this service.
 	 private static String serviceHost;  // host name of this service
 	 private static int port;    //service port.
 
-	 private static int resultCacheSize = 600;
+//	 private static int resultCacheSize = 600;
 	 
-	 private static final Hashtable<String, NetworkShortSummary> dbTable = new Hashtable<>();
-	 private static final Hashtable<String, NetworkShortSummary> dbTableAssociation = new Hashtable<>();
+//	 private static final Hashtable<String, NetworkShortSummary> dbTable = new Hashtable<>();
+//	 private static final Hashtable<String, NetworkShortSummary> dbTableAssociation = new Hashtable<>();
 	 
 	// private static Collection<AspectElement> templateStyles;
 	 	
 	 // task ID to status table. In sync with the geneSetSearch cache by RemovalListener
-	 private static final Hashtable<UUID, SearchStatus> statusTable = new Hashtable<>();
+//	 private static final Hashtable<UUID, SearchStatus> statusTable = new Hashtable<>();
 	 
-	 private static RemovalListener<Set<String>, UUID> removalListener = new RemovalListener<Set<String>, UUID>() {
+/*	 private static RemovalListener<Set<String>, UUID> removalListener = new RemovalListener<Set<String>, UUID>() {
 		 @Override
 		public void onRemoval(RemovalNotification<Set<String>, UUID> removal) {
 			    UUID taskId = removal.getValue();
@@ -107,22 +107,22 @@ public class App
 						return taskId;
 					}
 				}
-			 )		;  
+			 )		;  */
 	 
 	 
 	  public App() {}
 
-	  public static Hashtable<UUID,SearchStatus> getStatusTable() { return statusTable;}
+	  
 	  //public static String getHostName() { return ndexServerName;}
-	  public static GeneSymbolIndexer getGeneSearcher() { return geneSearcher;}
-	  public static GeneSymbolIndexer getGeneSearcherAssociation() { return geneSearcherAssociation;}
+	  public static GeneQueryService getInteractionService() { return interactionService;}
+	  public static GeneQueryService getAssociationService() { return associationService;} 
 	  public static String getWorkingPath() {return workingPath;}
 	  public static String getServiceHost() {return serviceHost;}
 	  public static int getPort() { return port;}
-	  public static Hashtable<String, NetworkShortSummary> getDBTable() { return dbTable;}
-	  public static UUID getTaskIdFromCache(Set<String> queryGeneSet) throws ExecutionException {
+	//  public static Hashtable<String, NetworkShortSummary> getDBTable() { return dbTable;}
+	/*  public static UUID getTaskIdFromCache(Set<String> queryGeneSet) throws ExecutionException {
 		  return geneSetSearchCache.get(queryGeneSet);
-	  }
+	  } */
 	  
 	/*  public static Collection<AspectElement> getVisualSytleTemplate() {
 		  return templateStyles;
@@ -177,63 +177,14 @@ public class App
 		ndexServerName = System.getProperty("ndex.host", "public.ndexbio.org");
 		workingPath = System.getProperty("ndex.interactomedb", "/opt/ndex/services/interactome");
 		
-		// geneSearcher needs to be initialized before initialize the dbTable
-		geneSearcher = new GeneSymbolIndexer(workingPath + "/genedb", "i");
-		geneSearcherAssociation = new GeneSymbolIndexer(workingPath + "/genedb", "a");
+		// gene query services need to be initialized before initialize the dbTable
+		interactionService = new GeneQueryService(workingPath, "i", ndexServerName);
+		associationService = new GeneQueryService(workingPath, "a", ndexServerName);
 		
 		serviceHost = System.getProperty("ndex.interactomehost", "localhost");
 
 		//remove the old results first
 		FileUtils.deleteDirectory(new File(workingPath + "/result"));
-		
-		// initialize the table of interactome networks
-		NdexRestClientModelAccessLayer ndex = 
-				new NdexRestClientModelAccessLayer(new NdexRestClient(null, null, ndexServerName));
-		
-		for (NetworkShortSummary summary : App.getGeneSearcher().getIdMapper().values()) {
-			NetworkSummary sum = ndex.getNetworkSummaryById(UUID.fromString(summary.getUuid()));
-			summary.setDescription(sum.getDescription());
-			summary.setEdgeCount(sum.getEdgeCount());
-			summary.setName(sum.getName());
-			summary.setNodeCount(sum.getNodeCount());
-			NdexPropertyValuePair iconURLProp = sum.getPropertyByName("__iconurl");
-			if ( iconURLProp != null ) 
-				summary.setImageURL(iconURLProp.getValue());
-			NdexPropertyValuePair networkType = sum.getPropertyByName("networkType");
-			String listofstr = ATTRIBUTE_DATA_TYPE.LIST_OF_STRING.toString();
-			if ( summary.getType() == null && networkType != null && networkType.getDataType().equals(listofstr)) {
-				ObjectMapper mapper = new ObjectMapper();
-				String[] netTypes = mapper.readValue(networkType.getValue(), String[].class);
-				for (String s : netTypes) {
-					if ( s.equals("ppi") || s.equals("pathway")) {
-						summary.setType("i");
-						break;
-					} else if ( s.equals("geneassociation") || s.equals("proteinassociation")) {
-						summary.setType("a");
-						break;
-					}
-				}
-			} 
-			if (summary.getType() == null) {
-				logStream.close();
-				throw new Exception ("Network Type of Network " + summary.getUuid() + " is not valid for Interactome search.");
-			}
-			
-			summary.setURL(ndexServerName+"/network/"+ sum.getExternalId() );
-			dbTable.put(summary.getUuid(), summary);
-		}
-
-      /*  Collection<NetworkSummary> nets = 
-        		ndex.getNetworkSummariesByIds(App.getGeneSearcher().getUUIDsFromDB().stream().map( e -> UUID.fromString(e)).collect(Collectors.toList()));
-        for ( NetworkSummary summary : nets) {
-        	NetworkShortSummary rec = new NetworkShortSummary();
-        	rec.setName(summary.getName());
-        	rec.setDescription(summary.getDescription());
-        	rec.setEdgeCount(summary.getEdgeCount());
-        	rec.setNodeCount(summary.getNodeCount());
-        	rec.setURL(ndexServerName+"/v2/network/"+ summary.getExternalId() );
-        	dbTable.put(summary.getExternalId().toString(),rec);
-        }*/
 		
 	    NetworkQueryManager.setDataFilePathPrefix(serverFileRepoPrefix);
 	    final Server server = new Server(port);
@@ -260,7 +211,7 @@ public class App
 	    context.addServlet(defaultServlet, CONTEXT_ROOT);
 
 	    server.start();
-	  //Now we are appending a line to our log 
+	    //Now we are appending a line to our log 
 	  	Log.getRootLogger().info("Embedded Jetty logging started.", new Object[]{});
 	    
 	    System.out.println("Server started on port " + port + ", with network data repo at " + serverFileRepoPrefix);

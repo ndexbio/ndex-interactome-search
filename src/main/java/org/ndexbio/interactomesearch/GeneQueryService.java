@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -34,55 +35,77 @@ public class GeneQueryService {
 	
 	private static int resultCacheSize = 600;
 
-	private static GeneSymbolIndexer geneSearcher;
+	private GeneSymbolIndexer geneSearcher;
 
-	private static final Hashtable<String, NetworkShortSummary> dbTable = new Hashtable<>();
+	private Hashtable<String, NetworkShortSummary> dbTable;
 
-	private static final Hashtable<UUID, SearchStatus> statusTable = new Hashtable<>();
-
-	private static RemovalListener<Set<String>, UUID> removalListener = new RemovalListener<Set<String>, UUID>() {
-		@Override
-		public void onRemoval(RemovalNotification<Set<String>, UUID> removal) {
-			UUID taskId = removal.getValue();
-			App.getStatusTable().remove(taskId);
-			// remove the directory from file system.
-			File resultDir = new File(App.getWorkingPath() + "/result/" + taskId.toString());
-			try {
-				FileUtils.deleteDirectory(resultDir);
-			} catch (IOException e) {
-				Log.getRootLogger().warn("Failed to remove result director for " + taskId.toString());
-				e.printStackTrace();
-
-			}
-		}
-	};
+	private Hashtable<UUID, SearchStatus> statusTable;
+	
+	private String queryType;
+	
+	private NetworkQueryManager queryManager;
+	
+	private String resultPathPrefix;
 	 
 	 // gene set to taskID cache
-	private static final LoadingCache<Set<String>, UUID> geneSetSearchCache = CacheBuilder.newBuilder()
-			.initialCapacity(resultCacheSize).maximumSize(resultCacheSize).removalListener(removalListener)
-			.build(new CacheLoader<Set<String>, UUID>() {
-				@Override
-				public UUID load(Set<String> geneSet) throws IOException {
-					UUID taskId = UUID.nameUUIDFromBytes(geneSet.stream().collect(Collectors.joining(",")).getBytes());
-					java.nio.file.Path path = Paths.get(App.getWorkingPath() + "/result/" + taskId.toString());
-					Files.createDirectories(path);
-					// add entry to the status table
-					SearchStatus st = new SearchStatus();
-					st.setStatus(SearchStatus.submitted);
-					App.getStatusTable().put(taskId, st);
-
-					SearchWorkerThread t = new SearchWorkerThread(geneSet, taskId, st);
-					t.start();
-
-					return taskId;
-				}
-			});
+	private final LoadingCache<Set<String>, UUID> geneSetSearchCache;
 
 	public GeneQueryService(String workingPath, String type, String ndexServerName)
 			throws SQLException, JsonParseException, JsonMappingException, IOException, NdexException {
 
+		this.queryType = type;
+		dbTable = new Hashtable<>();
+		this.statusTable = new Hashtable<>();
+		
 		geneSearcher = new GeneSymbolIndexer(workingPath + "/genedb", type);
+		
+		resultPathPrefix = App.getWorkingPath() + "/result/" + type + "/";
+		
+		queryManager = new NetworkQueryManager(geneSearcher, statusTable, dbTable);
+		
+		
+		// initialize the loading cache
+		
+		// define the listener for removal event.
+		RemovalListener<Set<String>, UUID> removalListener = new RemovalListener<Set<String>, UUID>() {
+			@Override
+			public void onRemoval(RemovalNotification<Set<String>, UUID> removal) {
+				UUID taskId = removal.getValue();
+				getStatusTable().remove(taskId);
+				// remove the directory from file system.
+				File resultDir = new File(getResultPathPrefix() + taskId.toString());
+				try {
+					FileUtils.deleteDirectory(resultDir);
+				} catch (IOException e) {
+					Log.getRootLogger().warn("Failed to remove result director for " + taskId.toString());
+					e.printStackTrace();
 
+				}
+			}
+		};
+		
+		// creating the cache.
+		geneSetSearchCache = CacheBuilder.newBuilder()
+				.initialCapacity(resultCacheSize).maximumSize(resultCacheSize).removalListener(removalListener)
+				.build(new CacheLoader<Set<String>, UUID>() {
+					@Override
+					public UUID load(Set<String> geneSet) throws IOException {
+						UUID taskId = UUID.nameUUIDFromBytes(geneSet.stream().collect(Collectors.joining(",")).getBytes());
+						java.nio.file.Path path = Paths.get(getResultPathPrefix() + taskId.toString());
+						Files.createDirectories(path);
+						// add entry to the status table
+						SearchStatus st = new SearchStatus();
+						st.setStatus(SearchStatus.submitted);
+						getStatusTable().put(taskId, st);
+
+						SearchWorkerThread t = new SearchWorkerThread(geneSet, taskId, st, queryManager);
+						t.start();
+
+						return taskId;
+					}
+				});
+		
+        // populate the db.
 		NdexRestClientModelAccessLayer ndex = new NdexRestClientModelAccessLayer(
 				new NdexRestClient(null, null, ndexServerName));
 
@@ -115,5 +138,17 @@ public class GeneQueryService {
 			dbTable.put(summary.getUuid(), summary);
 		}
 	}
+	
+	public Hashtable<UUID,SearchStatus> getStatusTable() { return statusTable;}
+	
+	public UUID getTaskIdFromCache(Set<String> queryGeneSet) throws ExecutionException {
+		  return geneSetSearchCache.get(queryGeneSet);
+	  } 
 
+	public Hashtable<String, NetworkShortSummary> getDBTable() { return dbTable;}
+	
+	private String getQueryType() { return queryType;}
+	
+	public String getResultPathPrefix () {return resultPathPrefix;};
+	
 }

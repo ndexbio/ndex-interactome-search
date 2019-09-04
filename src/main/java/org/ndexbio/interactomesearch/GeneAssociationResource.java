@@ -85,7 +85,7 @@ public class GeneAssociationResource {
 		Set<String> normalizedGeneSet = geneList.stream().map(e -> e.toUpperCase())
 				.map( e -> e.trim()).filter(e -> e.length()>0).collect(Collectors.toSet());
 		
-		UUID taskId = App.getTaskIdFromCache(normalizedGeneSet);
+		UUID taskId = App.getAssociationService().getTaskIdFromCache(normalizedGeneSet);
 		
 		String url = "http://"+App.getServiceHost()  +":"+App.getPort() + "/interactome/v1/search/" + taskId + "/status";
 		
@@ -102,9 +102,9 @@ public class GeneAssociationResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public List<InteractomeRefNetworkEntry> getDatabase() {
 		
-		List<InteractomeRefNetworkEntry> sources = new ArrayList<>(App.getDBTable().size()); 
+		List<InteractomeRefNetworkEntry> sources = new ArrayList<>(App.getAssociationService().getDBTable().size()); 
 	
-		for ( Map.Entry<String, NetworkShortSummary> entry: App.getDBTable().entrySet()) {
+		for ( Map.Entry<String, NetworkShortSummary> entry: App.getAssociationService().getDBTable().entrySet()) {
 			InteractomeRefNetworkEntry rec = new InteractomeRefNetworkEntry();
         	rec.setUuid(entry.getKey());
         	rec.setDescription(entry.getValue().getDescription());
@@ -131,12 +131,12 @@ public class GeneAssociationResource {
 		
 //		java.nio.file.Path path = FileSystems.getDefault().getPath("result", taskIdStr.toString());
 
-		SearchStatus status = App.getStatusTable().get(UUID.fromString(taskIdStr));
+		SearchStatus status = App.getAssociationService().getStatusTable().get(UUID.fromString(taskIdStr));
 		if (status == null ) 
 			throw new ObjectNotFoundException("Can't find task " + taskIdStr);
 		
 		if ( status.getStatus().equals(SearchStatus.complete)) {
-			String resultFilePath = App.getWorkingPath() + "/result/" + taskIdStr + "/result";
+			String resultFilePath = App.getAssociationService().getResultPathPrefix() + taskIdStr + "/result";
 
 	    	try {
 				FileInputStream in = new FileInputStream(resultFilePath)  ;
@@ -166,7 +166,7 @@ public class GeneAssociationResource {
 		
 //		java.nio.file.Path path = FileSystems.getDefault().getPath("result", taskIdStr.toString());
 
-		SearchStatus status = App.getStatusTable().get(UUID.fromString(taskIdStr));
+		SearchStatus status = App.getAssociationService().getStatusTable().get(UUID.fromString(taskIdStr));
 		if (status == null ) 
 			throw new ObjectNotFoundException("Can't find task " + taskIdStr);
 			
@@ -216,7 +216,7 @@ public class GeneAssociationResource {
 		//	java.nio.file.Path path = FileSystems.getDefault().getPath("result", taskIdStr);
 
 	 		
-	 		String cxFilePath = App.getWorkingPath() + "/result/" + taskIdStr + "/" + networkId + ".cx";
+	 		String cxFilePath = App.getAssociationService().getResultPathPrefix() + taskIdStr + "/" + networkId + ".cx";
 
 	    	try {
 				FileInputStream in = new FileInputStream(cxFilePath)  ;
@@ -269,12 +269,12 @@ public class GeneAssociationResource {
 	 * @throws IOException
 	 */
 		
-	private synchronized static boolean createDirIfNotExists(java.nio.file.Path path) throws IOException {
+	/*private synchronized static boolean createDirIfNotExists(java.nio.file.Path path) throws IOException {
 		if (Files.exists(path)) 
 			return false;
 
 		Files.createDirectories(path);
 		return true;
-	}
+	}*/
 	  
 }	

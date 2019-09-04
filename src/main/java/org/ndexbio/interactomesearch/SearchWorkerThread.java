@@ -14,19 +14,21 @@ public class SearchWorkerThread extends Thread {
 	private UUID taskId;
 	private Set<String> geneList;
 	private SearchStatus status;
+	private NetworkQueryManager queryManager;
 	
-	public SearchWorkerThread (Set<String> geneList, UUID  taskUUID, SearchStatus statusHolder ) {
+	public SearchWorkerThread (Set<String> geneList, UUID  taskUUID, SearchStatus statusHolder , NetworkQueryManager queryManager) {
 		taskId = taskUUID;
 		this.geneList = geneList;
 		this.status = statusHolder;
+		this.queryManager = queryManager;
 	}
 	
 	@Override
 	public void run() {
 		try {
-			NetworkQueryManager b = new NetworkQueryManager();
-			b.search(geneList, taskId);
-		} catch ( SQLException | IOException | NdexException | ExecutionException e) {
+			
+			queryManager.search(geneList, taskId);
+		} catch ( SQLException | IOException | NdexException e) {
 			e.printStackTrace();
 			status.setStatus(SearchStatus.failed);
 			status.setMessage(e.getMessage());
