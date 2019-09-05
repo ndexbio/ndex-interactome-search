@@ -62,7 +62,7 @@ public class GeneSymbolIndexer {
 	        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS NETWORKS_" + networkType + " (NET_ID INT auto_increment PRIMARY KEY, "
 	        		+ "NET_UUID VARCHAR(36) UNIQUE, imageurl varchar(500))");
 	        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS GENESYMBOLS_" + networkType + " (SYMBOL VARCHAR(30),NODE_ID BIGINT, NET_ID INT, "+
-	                  "PRIMARY KEY (SYMBOL,NODE_ID,NET_ID), FOREIGN KEY(NET_ID) REFERENCES NETWORKS(NET_ID))");
+	                  "PRIMARY KEY (SYMBOL,NODE_ID,NET_ID), FOREIGN KEY(NET_ID) REFERENCES NETWORKS_"+ networkType + "(NET_ID))");
 
 	        // populate the id mapping table
 	        try (PreparedStatement p = conn.prepareStatement("select net_id, net_uuid,imageurl from networks_" + networkType)) {

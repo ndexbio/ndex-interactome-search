@@ -1,0 +1,20 @@
+ 
+{
+	"associationNetworks": [
+		{"uuid": "b0b6c0ca-cf54-11e9-8861-f28291d78054"},
+		{"uuid": "8fad1c84-cf54-11e9-8861-f28291d78054"}	
+		],
+	"ppiNetworks": [
+		{
+			"uuid": "8f137492-cf54-11e9-8861-f28291d78054",
+			"imageURL": "http://bioplex.hms.harvard.edu/img/HarvardShieldSizedText.png"
+		},
+		{
+			"uuid": "8ddb42b0-cf54-11e9-8861-f28291d78054"
+		},
+		{
+			"uuid": "8c4930fe-cf54-11e9-8861-f28291d78054"
+		}
+		
+	]
+}
