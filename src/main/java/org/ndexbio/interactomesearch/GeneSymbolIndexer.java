@@ -254,7 +254,7 @@ public class GeneSymbolIndexer {
 		
 		GeneSymbolSearchResult r = new GeneSymbolSearchResult();
 		//r.initializeResultSet(netIdMapper);
-		String sqlStr = " select symbol,node_id,net_id from GENESYMBOLS n where symbol in("+ concatenateGenes(genes) + ")";
+		String sqlStr = " select symbol,node_id,net_id from GENESYMBOLS_" + networkType +" n where symbol in("+ concatenateGenes(genes) + ")";
 		
 		try ( Connection conn = cp.getConnection()) {
 			try (PreparedStatement p = conn.prepareStatement(sqlStr)) {

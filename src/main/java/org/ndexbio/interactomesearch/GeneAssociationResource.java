@@ -35,7 +35,7 @@ import org.ndexbio.model.exceptions.NdexException;
 import org.ndexbio.model.exceptions.ObjectNotFoundException;
 
 
-@Path("geneassocation/v1")
+@Path("geneassociation/v1")
 public class GeneAssociationResource {
 	
 

@@ -76,17 +76,21 @@ public class NetworkQueryManager {
 	private String searchTerms; */
 	private GeneSymbolIndexer symbolDB;
 	private Hashtable<UUID, SearchStatus> statusTable ;
-	private Hashtable<String, NetworkShortSummary> dbTable;
+	//private Hashtable<String, NetworkShortSummary> dbTable;
+	
+	private GeneQueryService service;
 	
 	public enum PPIQueryType {Direct, Interconnect, Neighborhood, Adjacent} 
 	
 	//private static String fsPath;
 	
-	public NetworkQueryManager (GeneSymbolIndexer geneSearcher, Hashtable<UUID, SearchStatus> statusTable, Hashtable<String, NetworkShortSummary> dbTable) {
+	public NetworkQueryManager (GeneQueryService service) {
 		
-	   symbolDB = geneSearcher;
-	   this.statusTable = statusTable;
-	   this.dbTable = dbTable;
+	   symbolDB = service.getGeneSearcher();
+	   this.statusTable = service.getStatusTable();
+//	   this.dbTable = service.getDBTable();
+	   
+	   this.service = service;
 	}
 	
 	public static void setDataFilePathPrefix(String serverFileRepoPrefix) {
@@ -170,7 +174,7 @@ public class NetworkQueryManager {
         	ele.setRank(i++);
         }
         
-		String resultFileName = App.getWorkingPath() + "/result/" + taskId.toString() + "/result";
+		String resultFileName = service.getResultPathPrefix() + taskId.toString() + "/result";
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectWriter writer = mapper.writer(new DefaultPrettyPrinter());
 		writer.writeValue(new File(resultFileName), resultList);	
@@ -383,7 +387,7 @@ public class NetworkQueryManager {
 		InteractomeSearchResult currentResult;
 		//s.setNodeCount(nodeIds.size());
 		
-		String tmpFileName = App.getWorkingPath() + "/result/" + taskId.toString() + "/tmp_" + netUUIDStr;
+		String tmpFileName = service.getResultPathPrefix() + taskId.toString() + "/tmp_" + netUUIDStr;
 		
 		try (FileOutputStream out = new FileOutputStream (tmpFileName) ) {
 		
@@ -560,7 +564,7 @@ public class NetworkQueryManager {
 		} else {
 			//rename the file 
 			java.nio.file.Path tgt = Paths
-					.get(App.getWorkingPath() + "/result/" + taskId.toString() + "/" + netUUIDStr + ".cx");
+					.get(service.getResultPathPrefix() + taskId.toString() + "/" + netUUIDStr + ".cx");
 			Files.move(src, tgt, StandardCopyOption.ATOMIC_MOVE);
 
 			long t2 = Calendar.getInstance().getTimeInMillis();
@@ -576,7 +580,7 @@ public class NetworkQueryManager {
 		InteractomeSearchResult currentResult = new  InteractomeSearchResult();
 		currentResult.setNetworkUUID(netUUIDStr);
 		currentResult.setHitGenes(hitgenes);
-		NetworkShortSummary summary = dbTable.get(netUUIDStr);
+		NetworkShortSummary summary = service.getDBTable().get(netUUIDStr);
 		currentResult.setDescription(summary.getName() + ", parent network size: " + 
 				   summary.getNodeCount() + " nodes, " + summary.getEdgeCount() + " edges"
 		        );
@@ -595,7 +599,7 @@ public class NetworkQueryManager {
 		
 		InteractomeSearchResult currentResult;
 		
-		String tmpFileName = App.getWorkingPath() + "/result/" + taskId.toString() + "/tmp_" + netUUIDStr;
+		String tmpFileName = service.getResultPathPrefix() + taskId.toString() + "/tmp_" + netUUIDStr;
 		
 		try (FileOutputStream out = new FileOutputStream (tmpFileName) ) {
 		
@@ -677,7 +681,7 @@ public class NetworkQueryManager {
 		
 		//rename the file 
 		java.nio.file.Path src = Paths.get(tmpFileName);
-		java.nio.file.Path tgt = Paths.get(App.getWorkingPath() + "/result/" + taskId.toString() + "/" + netUUIDStr + ".cx");		
+		java.nio.file.Path tgt = Paths.get(service.getResultPathPrefix() + taskId.toString() + "/" + netUUIDStr + ".cx");		
 		Files.move(src, tgt, StandardCopyOption.ATOMIC_MOVE); 				
 		
 		long t2 = Calendar.getInstance().getTimeInMillis();
@@ -1046,7 +1050,7 @@ public class NetworkQueryManager {
 
 		InteractomeSearchResult currentResult;
 
-		String tmpFileName = App.getWorkingPath() + "/result/" + taskId.toString() + "/tmp_" + netUUIDStr;
+		String tmpFileName = service.getResultPathPrefix() + taskId.toString() + "/tmp_" + netUUIDStr;
 
 		try (FileOutputStream out = new FileOutputStream(tmpFileName)) {
 
@@ -1182,7 +1186,7 @@ public class NetworkQueryManager {
 		} else {
 			// rename the file
 			java.nio.file.Path tgt = Paths
-					.get(App.getWorkingPath() + "/result/" + taskId.toString() + "/" + netUUIDStr + ".cx");
+					.get( service.getResultPathPrefix() + taskId.toString() + "/" + netUUIDStr + ".cx");
 			Files.move(src, tgt, StandardCopyOption.ATOMIC_MOVE);
 
 			long t2 = Calendar.getInstance().getTimeInMillis();

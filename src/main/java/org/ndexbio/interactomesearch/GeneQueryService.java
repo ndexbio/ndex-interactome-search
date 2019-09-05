@@ -59,9 +59,9 @@ public class GeneQueryService {
 		
 		geneSearcher = new GeneSymbolIndexer(workingPath + "/genedb", type);
 		
-		resultPathPrefix = App.getWorkingPath() + "/result/" + type + "/";
+		resultPathPrefix = App.getWorkingPath() + "/task/" + type + "/";
 		
-		queryManager = new NetworkQueryManager(geneSearcher, statusTable, dbTable);
+		queryManager = new NetworkQueryManager(this);
 		
 		
 		// initialize the loading cache
@@ -120,6 +120,8 @@ public class GeneQueryService {
 				summary.setImageURL(iconURLProp.getValue());
 			NdexPropertyValuePair networkType = sum.getPropertyByName("networkType");
 			String listofstr = ATTRIBUTE_DATA_TYPE.LIST_OF_STRING.toString();
+			summary.setType(type);
+			/*
 			if (summary.getType() == null && networkType != null && networkType.getDataType().equals(listofstr)) {
 				ObjectMapper mapper = new ObjectMapper();
 				String[] netTypes = mapper.readValue(networkType.getValue(), String[].class);
@@ -132,7 +134,7 @@ public class GeneQueryService {
 						break;
 					}
 				}
-			}
+			} */
 
 			summary.setURL(ndexServerName + "/network/" + sum.getExternalId());
 			dbTable.put(summary.getUuid(), summary);
@@ -149,6 +151,9 @@ public class GeneQueryService {
 	
 	private String getQueryType() { return queryType;}
 	
-	public String getResultPathPrefix () {return resultPathPrefix;};
+	public String getResultPathPrefix () {return resultPathPrefix;}
+	
+	public GeneSymbolIndexer getGeneSearcher() {return this.geneSearcher;}
+	
 	
 }
