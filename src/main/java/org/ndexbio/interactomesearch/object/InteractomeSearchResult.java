@@ -1,12 +1,20 @@
 package org.ndexbio.interactomesearch.object;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 
+@Deprecated
+/**
+ * We should use org.ndexbio.ndexsearch.rest.model.SourceResult instead when that class is moved out from ndexsearch-rest to ndex-java-data-model. 
+ * @author jingchen
+ *
+ */
 public class InteractomeSearchResult {
 	private int rank;
 	private Set<String> hitGenes;
@@ -17,10 +25,14 @@ public class InteractomeSearchResult {
 	private int nodeCount;
 	private int edgeCount;
     private String imageURL;
+    private Map<String,Object> _details;
+
+    
     
 	public InteractomeSearchResult() {
 		//summary = new InteractomeResultNetworkSummary();
 		hitGenes = new TreeSet<>();
+		_details = new TreeMap<>();
 	}
 
 	public int getRank() {
@@ -93,5 +105,13 @@ public class InteractomeSearchResult {
 
 	public void setImageURL(String imageurl) {
 		this.imageURL = imageurl;
+	}
+
+	public Map<String,Object> getDetails() {
+		return _details;
+	}
+
+	public void setDetails(Map<String,Object> _details) {
+		this._details = _details;
 	}
 }

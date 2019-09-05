@@ -63,6 +63,10 @@ public class NetworkQueryManager {
 
 //	private int depth;
 //	private String netId;
+	
+	private static final String provDerivedFrom = "prov:wasDerivedFrom";
+	private static final String provGeneratedBy = "prov:wasGeneratedBy";
+
 	private static final Long consistencyGrp = Long.valueOf(1L);
 	private static final String mdeVer = "1.0";
 	private static final String PROGRESS = "progress";
@@ -543,10 +547,10 @@ public class NetworkQueryManager {
 					currentResult = createResult(netUUIDStr, hitgenes, finalNodes.size(), finalEdgeIds.size());
 
 					ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<>(2);
-					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasDerivedFrom", netUUIDStr));
-					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasGeneratedBy",
+					provenanceRecords.add(new NetworkAttributesElement(null, provDerivedFrom, netUUIDStr));
+					provenanceRecords.add(new NetworkAttributesElement(null, provGeneratedBy,
 							"NDEx Interconnect Query/v1.1 (Query terms=\""
-									+ genes.stream().collect(Collectors.joining(",")) + "\")"));
+									+ genes.stream().collect(Collectors.joining(" ")) + "\")"));
 
 					writeOtherAspectsForSubnetwork(netUUIDStr, finalNodes, finalEdgeIds, writer, md, postmd,
 							"Interconnect query result on network", provenanceRecords, nodeIds);
@@ -581,13 +585,15 @@ public class NetworkQueryManager {
 		currentResult.setNetworkUUID(netUUIDStr);
 		currentResult.setHitGenes(hitgenes);
 		NetworkShortSummary summary = service.getDBTable().get(netUUIDStr);
-		currentResult.setDescription(summary.getName() + ", parent network size: " + 
-				   summary.getNodeCount() + " nodes, " + summary.getEdgeCount() + " edges"
+		currentResult.setDescription(summary.getName() /*+ ", parent network size: " + 
+				   summary.getNodeCount() + " nodes, " + summary.getEdgeCount() + " edges"*/
 		        );
 		currentResult.setNodeCount(nodeCount);
 		currentResult.setEdgeCount(edgeCount);
 		currentResult.setImageURL(summary.getImageURL());
 		currentResult.setPercentOverlap(edgeCount*100/summary.getEdgeCount());
+		currentResult.getDetails().put("parent_network_edges", summary.getEdgeCount());
+		currentResult.getDetails().put("parent_network_nodes", summary.getNodeCount());
 		return currentResult;
 	}
 
@@ -666,9 +672,9 @@ public class NetworkQueryManager {
 			currentResult = createResult(netUUIDStr, hitgenes,nodeIds.size(), edgeIds.size());
 
 			ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<> (2);
-			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasDerivedFrom", netUUIDStr));
-			provenanceRecords.add(new NetworkAttributesElement (null, "prov:wasGeneratedBy",
-				"NDEx Direct Query/v1.1 (Query terms=\""+ genes.stream().collect(Collectors.joining(","))
+			provenanceRecords.add(new NetworkAttributesElement (null, provDerivedFrom, netUUIDStr));
+			provenanceRecords.add(new NetworkAttributesElement (null, provGeneratedBy,
+				"NDEx Direct Query/v1.1 (Query terms=\""+ genes.stream().collect(Collectors.joining(" "))
 				+ "\")"));
 		
 			writeOtherAspectsForSubnetwork(netUUIDStr, nodeIds, edgeIds, writer, md, postmd,
@@ -752,9 +758,14 @@ public class NetworkQueryManager {
 			try (AspectIterator<NetworkAttributesElement> ei = new AspectIterator<>(netUUID,NetworkAttributesElement.ASPECT_NAME, NetworkAttributesElement.class, pathPrefix)) {
 				while (ei.hasNext()) {
 					NetworkAttributesElement attr = ei.next();
-					if (attr.getName().equals("name"))
-						attr.setSingleStringValue(networkNamePrefix + " - " + attr.getValue());
-					writer.writeElement(attr);
+					
+					String attrName = attr.getName();
+					//Strip out the old provenance Info from the network because we are going to inject new ones in.
+					if ( (! attrName.equals(provDerivedFrom)) && (! attrName.equals(provGeneratedBy))) {
+						if (attr.getName().equals("name"))
+							attr.setSingleStringValue(networkNamePrefix + " - " + attr.getValue());
+						writer.writeElement(attr);
+					}
 				}
 			}
 		}
@@ -1164,10 +1175,10 @@ public class NetworkQueryManager {
 					status.put(PROGRESS, 40);
 					ArrayList<NetworkAttributesElement> provenanceRecords = new ArrayList<>(2);
 					String queryName = (fullNeighborhood? "Neighborhood" : "Adjacent");
-					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasDerivedFrom", netUUIDStr));
-					provenanceRecords.add(new NetworkAttributesElement(null, "prov:wasGeneratedBy",
+					provenanceRecords.add(new NetworkAttributesElement(null, provDerivedFrom, netUUIDStr));
+					provenanceRecords.add(new NetworkAttributesElement(null, provGeneratedBy,
 							queryName + " Query/v1.1 (Query terms=\""
-									+ genes.stream().collect(Collectors.joining(",")) + "\")"));
+									+ genes.stream().collect(Collectors.joining(" ")) + "\")"));
 
 					writeOtherAspectsForSubnetwork(netUUIDStr, finalNodeIds, edgeIds, writer, md, postmd,
 							 queryName+ " query result on network", provenanceRecords, nodeIds);

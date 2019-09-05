@@ -18,7 +18,7 @@ import org.ndexbio.model.exceptions.NdexException;
 
 public class IneractomeRestClientTest {
 
-	@Test
+/*	@Test
 	public void test() throws NdexException {
 		InteractomeRestClient client = new InteractomeRestClient("http://localhost:8285/interactome/v1/", null);
 		
@@ -30,13 +30,13 @@ public class IneractomeRestClientTest {
 
 	@Test
 	public void test1() throws NdexException, IOException {
-		InteractomeRestClient client = new InteractomeRestClient("http://localhost:8285/interactome/v1/", null);
+		InteractomeRestClient client = new InteractomeRestClient("http://localhost:8285/interactome/ppi/v1/", null);
 		
 		String[] genes = {"GAB1", "FOS", "SRF", "AATF", "AKT1", "FOOOO", "BARRR"};
 		
 		UUID id = client.search(Arrays.asList(genes));
 		
-		assertEquals(id, UUID.fromString("fba34524-54f0-3eca-9d94-d1e76e9f7235") );
+		assertEquals(id, UUID.fromString("81a61ce5-24bf-3769-9988-625844a2f6c3") );
 		
 		SearchStatus status = client.getSearchStatus(id);
 		
@@ -52,6 +52,6 @@ public class IneractomeRestClientTest {
 		}
 		
 		
-	}
+	} */
 	
 }
