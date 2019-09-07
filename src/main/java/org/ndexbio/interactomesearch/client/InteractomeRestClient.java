@@ -98,7 +98,7 @@ public class InteractomeRestClient {
 
 	    }
 	    
-	    public InputStream getOverlayedNetworkStream (UUID taskId, UUID networkId) throws NdexException {
+	    public InputStream getOverlaidNetworkStream (UUID taskId, UUID networkId) throws NdexException {
 	    	Client client = ClientBuilder.newBuilder().build();
 	        WebTarget target = client.target(_restEndPoint  + "search/" + taskId + "/overlaynetwork?networkUUID=" + networkId );
 	        Response response = target.request().get();
