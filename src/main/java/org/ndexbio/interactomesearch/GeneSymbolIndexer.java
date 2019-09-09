@@ -52,12 +52,13 @@ public class GeneSymbolIndexer {
 	 * 'i' for PPI networks or 'a' for geneAssociation networks.
 	 * @throws SQLException
 	 */
-	public GeneSymbolIndexer(String dbpath, String networkType) throws SQLException {
+	public GeneSymbolIndexer(JdbcConnectionPool cp, String networkType) throws SQLException {
 		
 		this.networkType = networkType;
 		
 		netIdMapper = new TreeMap<>();
-		cp = JdbcConnectionPool.create("jdbc:h2:" + dbpath, "sa", "sa");
+		this.cp = cp;
+		
 	    try ( Connection conn = cp.getConnection()) {
 	        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS NETWORKS_" + networkType + " (NET_ID INT auto_increment PRIMARY KEY, "
 	        		+ "NET_UUID VARCHAR(36) UNIQUE, imageurl varchar(500))");
@@ -82,9 +83,9 @@ public class GeneSymbolIndexer {
 	
 	private void setPathPrefix(String pathPrefix) { this.pathPrefix = pathPrefix;}
 	
-	public void shutdown() {
+/*	public void shutdown() {
 		cp.dispose();
-	}
+	} */
 	
 
 	//public String getUUIDFromNetId(Integer net_id) { return netIdMapper.get(net_id).getUuid();}
@@ -305,28 +306,30 @@ public class GeneSymbolIndexer {
 				ObjectMapper om = new ObjectMapper();
 				InteractomeNetworkSet dataSet = om.readValue(inputStream, InteractomeNetworkSet.class);
 				
-				GeneSymbolIndexer db1 = new GeneSymbolIndexer(args[0], "i");     
+				String dbPath = args[0];
+				JdbcConnectionPool cplocal = JdbcConnectionPool.create("jdbc:h2:" + dbPath, "sa", "sa");
+				
+				GeneSymbolIndexer db1 = new GeneSymbolIndexer(cplocal, "i");     
 				db1.setPathPrefix(args[1]);
 				for (InteractomeNetworkEntry entry: dataSet.getPpiNetworks()) {
 					db1.rebuildIndex(UUID.fromString(entry.getUuid()), entry.getImageURL());
-				}
-				db1.shutdown();
+				}				
 				
-				
-				GeneSymbolIndexer db2 = new GeneSymbolIndexer(args[0],"a");
+				GeneSymbolIndexer db2 = new GeneSymbolIndexer(cplocal,"a");
 				db2.setPathPrefix(args[1]);
 				for (InteractomeNetworkEntry entry: dataSet.getAssociationNetworks()) {
 					db2.rebuildIndex(UUID.fromString(entry.getUuid()), entry.getImageURL());
 				}
-				db2.shutdown();
 
 			}
 				
 		} else if (args.length == 5) {
-			GeneSymbolIndexer db = new GeneSymbolIndexer(args[0], args[3]);
+			String dbPath = args[0];
+			JdbcConnectionPool cplocal = JdbcConnectionPool.create("jdbc:h2:" + dbPath, "sa", "sa");
+			GeneSymbolIndexer db = new GeneSymbolIndexer(cplocal, args[3]);
 			db.setPathPrefix(args[1]);
 			db.rebuildIndex(UUID.fromString(args[2]), args[4]);
-			db.shutdown();
+		//	db.shutdown();
 			
 		} else {
 			

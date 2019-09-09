@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.util.log.Log;
+import org.h2.jdbcx.JdbcConnectionPool;
 import org.ndexbio.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
 import org.ndexbio.interactomesearch.object.NetworkShortSummary;
 import org.ndexbio.interactomesearch.object.SearchStatus;
@@ -50,14 +51,14 @@ public class GeneQueryService {
 	 // gene set to taskID cache
 	private final LoadingCache<Set<String>, UUID> geneSetSearchCache;
 
-	public GeneQueryService(String workingPath, String type, String ndexServerName)
+	public GeneQueryService(JdbcConnectionPool connectionPool, String type, String ndexServerName)
 			throws SQLException, JsonParseException, JsonMappingException, IOException, NdexException {
 
 		this.queryType = type;
 		dbTable = new Hashtable<>();
 		this.statusTable = new Hashtable<>();
 		
-		geneSearcher = new GeneSymbolIndexer(workingPath + "/genedb", type);
+		geneSearcher = new GeneSymbolIndexer(connectionPool, type);
 		
 		resultPathPrefix = App.getWorkingPath() + "/task/" + type + "/";
 		

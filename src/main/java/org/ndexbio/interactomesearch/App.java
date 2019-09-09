@@ -18,6 +18,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.RolloverFileOutputStream;
 import org.eclipse.jetty.util.log.Log;
+import org.h2.jdbcx.JdbcConnectionPool;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.ndexbio.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
 import org.ndexbio.interactomesearch.object.NetworkShortSummary;
@@ -54,6 +55,10 @@ public class App
 	 private static String workingPath;  // working directory of this service.
 	 private static String serviceHost;  // host name of this service
 	 private static int port;    //service port.
+	 
+	 //connection pool to the embedded db.
+	 private static JdbcConnectionPool cp;
+
 
 //	 private static int resultCacheSize = 600;
 	 
@@ -160,6 +165,8 @@ public class App
         		(ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 		rootLog.setLevel(Level.INFO);
 		
+
+		
 		//We are configuring a RolloverFileOutputStream with file name pattern  and appending property
 		RolloverFileOutputStream os = new RolloverFileOutputStream("logs/queries_yyyy_mm_dd.log", true);
 		
@@ -177,9 +184,12 @@ public class App
 		ndexServerName = System.getProperty("ndex.host", "public.ndexbio.org");
 		workingPath = System.getProperty("ndex.interactomedb", "/opt/ndex/services/interactome");
 		
+		
+		cp = JdbcConnectionPool.create("jdbc:h2:" + workingPath + "/genedb", "sa", "sa");
+
 		// gene query services need to be initialized before initialize the dbTable
-		interactionService = new GeneQueryService(workingPath, "i", ndexServerName);
-		associationService = new GeneQueryService(workingPath, "a", ndexServerName);
+		interactionService = new GeneQueryService(cp, "i", ndexServerName);
+		associationService = new GeneQueryService(cp, "a", ndexServerName);
 		
 		serviceHost = System.getProperty("ndex.interactomehost", "localhost");
 
