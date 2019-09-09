@@ -66,6 +66,8 @@ public class NetworkQueryManager {
 	
 	private static final String provDerivedFrom = "prov:wasDerivedFrom";
 	private static final String provGeneratedBy = "prov:wasGeneratedBy";
+	public  static final String parentNetworkEdges = "parent_network_edges";
+	public  static final String parentNetworkNodes = "parent_network_nodes";
 
 	private static final Long consistencyGrp = Long.valueOf(1L);
 	private static final String mdeVer = "1.0";
@@ -106,6 +108,41 @@ public class NetworkQueryManager {
 	//public static String getFsPath() { return fsPath;}
 	
 	//public static void setFsPath(String workingDir) {fsPath = workingDir;}
+	
+	private static int compareInteractomeSearchResult(InteractomeSearchResult h1, InteractomeSearchResult h2) {
+		// sorting by number of hitgenes first. 
+    	int s1 = h1.getHitGenes().size();
+    	int s2 = h2.getHitGenes().size();
+    	
+    	
+    	if (s1>s2) return -1;
+    	if (s1 < s2 ) return 1;
+    	if (s1 == s2) {   // sort by edge count as the second rank parameter
+    		int ec1 = h1.getEdgeCount();
+    		int ec2 = h2.getEdgeCount();
+    		
+    		if (ec1 > ec2) return -1;
+    		if (ec1 < ec2) return 1;
+    		if ( ec1 == ec2) {  // sort by node count as the 3rd parameter
+    			int nc1 = h1.getNodeCount();
+    			int nc2 = h2.getNodeCount();
+    			
+    			if ( nc1 > nc2) return -1;
+    			if ( nc1 < nc2) return 1;
+    			if ( nc1 == nc2) {  // sort by parent network edge count if there is still a tie.
+    				int pec1 = ((Integer)h1.getDetails().get(parentNetworkEdges)).intValue();
+    				int pec2 = ((Integer)h2.getDetails().get(parentNetworkEdges)).intValue();
+    				
+    				if ( pec1 > pec2) 
+    					return 1;
+    				else if ( pec1 < pec2 ) return -1;
+    				else 
+    					return 0;
+    			}
+    		}
+    	}
+		return 0;            	
+	}
 	
 	public void search(Set<String> genes, UUID taskId) throws SQLException, IOException, NdexException {
 
@@ -155,21 +192,7 @@ public class NetworkQueryManager {
         Collections.sort(resultList, new Comparator<InteractomeSearchResult>() {
             @Override
             public int compare(InteractomeSearchResult h1, InteractomeSearchResult h2) {
-            	
-            	// sorting by score. value = edgeCount*3 + nodeCount
-            	int s1 = h1.getEdgeCount() *3 + h2.getNodeCount();
-            	int s2 = h2.getEdgeCount() *3 + h2.getNodeCount();
-            	
-            	
-            	if (s1>s2) return -1;
-            	if (s1 < s2 ) return 1;
-          /*  	if (s1 == s2) {
-           		if (h1.getSummary().getParentEdgeCount() > h2.getSummary().getParentEdgeCount() ) 
-            			return -1;
-            		if (h1.getSummary().getParentEdgeCount() < h2.getSummary().getParentEdgeCount() ) 
-            		    return 1;
-            	}*/
-        		return 0;            	
+            	return compareInteractomeSearchResult(h1,h2);
             }
         });
         
@@ -592,8 +615,8 @@ public class NetworkQueryManager {
 		currentResult.setEdgeCount(edgeCount);
 		currentResult.setImageURL(summary.getImageURL());
 		currentResult.setPercentOverlap(edgeCount*100/summary.getEdgeCount());
-		currentResult.getDetails().put("parent_network_edges", summary.getEdgeCount());
-		currentResult.getDetails().put("parent_network_nodes", summary.getNodeCount());
+		currentResult.getDetails().put(parentNetworkEdges, summary.getEdgeCount());
+		currentResult.getDetails().put(parentNetworkNodes, summary.getNodeCount());
 		return currentResult;
 	}
 
