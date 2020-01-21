@@ -1,15 +1,7 @@
 package org.ndexbio.interactomesearch;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Hashtable;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Server;
@@ -20,21 +12,7 @@ import org.eclipse.jetty.util.RolloverFileOutputStream;
 import org.eclipse.jetty.util.log.Log;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
-import org.ndexbio.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
-import org.ndexbio.interactomesearch.object.NetworkShortSummary;
-import org.ndexbio.interactomesearch.object.SearchStatus;
-import org.ndexbio.model.object.NdexPropertyValuePair;
-import org.ndexbio.model.object.network.NetworkSummary;
-import org.ndexbio.rest.client.NdexRestClient;
-import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
 import org.slf4j.Logger;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
 
 import ch.qos.logback.classic.Level;
 

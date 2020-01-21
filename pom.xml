@@ -19,7 +19,7 @@
 		<jetty.version>9.4.15.v20190215</jetty.version>
 
 		<maven-shade-plugin.version>3.1.0</maven-shade-plugin.version>
-		<maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
+		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
 
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
