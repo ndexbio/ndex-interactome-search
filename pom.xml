@@ -9,7 +9,6 @@
 	<packaging>jar</packaging>
 
 	<name>ndex-interactome-search</name>
-	<url>http://maven.apache.org</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -50,6 +49,18 @@
         </repository>
     </repositories>
 
+	<distributionManagement>
+        <repository>
+            <id>cytoscape_releases</id>
+            <name>Cytoscape Releases</name>
+            <url>http://nrnb-nexus.ucsd.edu/repository/cytoscape_releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>cytoscape_snapshots</id>
+            <name>Cytoscape Snapshots</name>
+            <url>http://nrnb-nexus.ucsd.edu/repository/cytoscape_snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 	<dependencies>
 		<dependency>
@@ -111,7 +122,9 @@
 			<version>1.4.196</version>
 		</dependency>
 	</dependencies>
-
+	<scm>
+	  <connection>scm:git:https://github.com/cytoscape/ndex-interactome-search.git</connection>
+    </scm>
 
 	<build>
 		<finalName>interactomeSearch-${project.version}</finalName>
