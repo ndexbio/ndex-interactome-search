@@ -1,7 +1,13 @@
 package org.ndexbio.interactomesearch.object;
 
+import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
+
+import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.object.network.NetworkSummary;
+import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
 
 public class InteractomeNetworkSet {
 	
@@ -28,5 +34,4 @@ public class InteractomeNetworkSet {
 	public void setAssociationNetworks(Set<InteractomeNetworkEntry> associationNetworks) {
 		this.associationNetworks = associationNetworks;
 	}
-
 }

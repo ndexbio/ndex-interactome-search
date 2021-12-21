@@ -5,7 +5,7 @@
 
 	<groupId>org.ndexbio</groupId>
 	<artifactId>ndex-interactome-search</artifactId>
-	<version>0.3.0</version>
+	<version>0.3.1</version>
 	<packaging>jar</packaging>
 
 	<name>ndex-interactome-search</name>
@@ -53,12 +53,12 @@
         <repository>
             <id>cytoscape_releases</id>
             <name>Cytoscape Releases</name>
-            <url>http://nrnb-nexus.ucsd.edu/repository/cytoscape_releases/</url>
+            <url>https://nrnb-nexus.ucsd.edu/repository/cytoscape_releases/</url>
         </repository>
         <snapshotRepository>
             <id>cytoscape_snapshots</id>
             <name>Cytoscape Snapshots</name>
-            <url>http://nrnb-nexus.ucsd.edu/repository/cytoscape_snapshots/</url>
+            <url>https://nrnb-nexus.ucsd.edu/repository/cytoscape_snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -104,7 +104,7 @@
 		<dependency>
 			<groupId>org.ndexbio.client</groupId>
 			<artifactId>ndex-java-client</artifactId>
-			<version>2.4.3</version>
+			<version>2.5.2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
@@ -121,6 +121,31 @@
 			<artifactId>h2</artifactId>
 			<version>1.4.196</version>
 		</dependency>
+<!--dependency>
+    <groupId>org.junit.jupiter</groupId>
+    <artifactId>junit-jupiter-engine</artifactId>
+    <version>5.8.2</version>
+    <scope>test</scope>
+</dependency-->
+<!-- https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter -->
+<dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-junit-jupiter</artifactId>
+    <version>3.12.4</version>
+    <scope>test</scope>
+</dependency>
+
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>3.12.4</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+  <groupId>org.mockito</groupId>
+  <artifactId>mockito-inline</artifactId>
+  <version>3.12.4</version>
+</dependency>
 	</dependencies>
 	<scm>
 	  <connection>scm:git:https://github.com/cytoscape/ndex-interactome-search.git</connection>
@@ -156,8 +181,8 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<source>1.8</source>
-							<target>1.8</target>
+							<source>11</source>
+							<target>11</target>
 							<transformers>
 
 								<transformer

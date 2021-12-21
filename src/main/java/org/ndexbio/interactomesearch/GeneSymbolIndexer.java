@@ -9,8 +9,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,11 +25,14 @@ import org.ndexbio.interactomesearch.object.GeneSymbolSearchResult;
 import org.ndexbio.interactomesearch.object.InteractomeNetworkEntry;
 import org.ndexbio.interactomesearch.object.InteractomeNetworkSet;
 import org.ndexbio.interactomesearch.object.NetworkShortSummary;
+import org.ndexbio.model.exceptions.NdexException;
+import org.ndexbio.model.object.network.NetworkSummary;
 import org.ndexbio.model.tools.TermUtilities;
+import org.ndexbio.rest.client.NdexRestClient;
+import org.ndexbio.rest.client.NdexRestClientModelAccessLayer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 
 public class GeneSymbolIndexer {
 	
@@ -45,6 +46,8 @@ public class GeneSymbolIndexer {
 	
 	private TreeMap<Integer, NetworkShortSummary> netIdMapper;
 	
+	NdexRestClientModelAccessLayer ndex; 
+	
 	/**
 	 * 
 	 * @param dbpath
@@ -52,7 +55,7 @@ public class GeneSymbolIndexer {
 	 * 'i' for PPI networks or 'a' for geneAssociation networks.
 	 * @throws SQLException
 	 */
-	public GeneSymbolIndexer(JdbcConnectionPool cp, String networkType) throws SQLException {
+	public GeneSymbolIndexer(JdbcConnectionPool cp, String networkType, NdexRestClientModelAccessLayer ndex ) throws SQLException {
 		
 		this.networkType = networkType;
 		
@@ -79,9 +82,10 @@ public class GeneSymbolIndexer {
 	    }
 	    
 	    pathPrefix = NetworkQueryManager.getDataFilePathPrefix();    
+	    this.ndex = ndex;
 	}
 	
-	private void setPathPrefix(String pathPrefix) { this.pathPrefix = pathPrefix;}
+	protected void setPathPrefix(String pathPrefix) { this.pathPrefix = pathPrefix;}
 	
 /*	public void shutdown() {
 		cp.dispose();
@@ -106,13 +110,19 @@ public class GeneSymbolIndexer {
 	 * @throws SQLException
 	 * @throws JsonProcessingException
 	 * @throws IOException
+	 * @throws NdexException 
 	 */
-	public void rebuildIndex(UUID networkUUID, String imageURL) throws SQLException, JsonProcessingException, IOException {
+	public void rebuildIndex(UUID networkUUID, String imageURL) throws SQLException, JsonProcessingException, IOException, NdexException {
 		
 		System.out.println("Rebuild Index on network " + networkUUID);
 		
 		removeIndex (networkUUID);
-		
+
+		NetworkSummary s = ndex.getNetworkSummaryById(networkUUID);
+		if ( s.getEdgeCount() == 0 ) {
+			System.err.println("Network " + networkUUID.toString() + " has 0 edges, it will not be indexed.");
+			return;
+		}	
         int net_id;
 		try ( Connection conn = cp.getConnection()) {
 	        
@@ -251,6 +261,17 @@ public class GeneSymbolIndexer {
 		
 	}
 	
+	public void removeAllIndexes() throws SQLException {
+		try ( Connection conn = cp.getConnection()) {
+	        conn.createStatement().execute("delete from genesymbols_"+networkType );
+	        
+	        conn.createStatement().execute("delete from NETWORKS_"+networkType);
+	        conn.commit();
+	    }	
+		netIdMapper.clear();
+		
+	}
+	
 	public GeneSymbolSearchResult search(Collection<String> genes) throws SQLException {
 		
 		GeneSymbolSearchResult r = new GeneSymbolSearchResult();
@@ -299,7 +320,7 @@ public class GeneSymbolIndexer {
 	 */
 	public static void main(String... args) throws Exception {
 		
-		if ( args.length == 3 ) {
+		if ( args.length == 4 ) {
 				
 			try (FileInputStream inputStream = new FileInputStream(args[2])) {
 				  //   Type sooper = getClass().getGenericSuperclass();
@@ -309,13 +330,18 @@ public class GeneSymbolIndexer {
 				String dbPath = args[0];
 				JdbcConnectionPool cplocal = JdbcConnectionPool.create("jdbc:h2:" + dbPath, "sa", "sa");
 				
-				GeneSymbolIndexer db1 = new GeneSymbolIndexer(cplocal, "i");     
+				NdexRestClientModelAccessLayer ndex = new NdexRestClientModelAccessLayer(
+						new NdexRestClient(null, null, args[3]));
+
+				GeneSymbolIndexer db1 = new GeneSymbolIndexer(cplocal, "i", ndex);     
+				db1.removeAllIndexes();
 				db1.setPathPrefix(args[1]);
 				for (InteractomeNetworkEntry entry: dataSet.getPpiNetworks()) {
 					db1.rebuildIndex(UUID.fromString(entry.getUuid()), entry.getImageURL());
 				}				
 				
-				GeneSymbolIndexer db2 = new GeneSymbolIndexer(cplocal,"a");
+				GeneSymbolIndexer db2 = new GeneSymbolIndexer(cplocal,"a", ndex);
+				db1.removeAllIndexes();
 				db2.setPathPrefix(args[1]);
 				for (InteractomeNetworkEntry entry: dataSet.getAssociationNetworks()) {
 					db2.rebuildIndex(UUID.fromString(entry.getUuid()), entry.getImageURL());
@@ -323,19 +349,23 @@ public class GeneSymbolIndexer {
 
 			}
 				
-		} else if (args.length == 5) {
+		} else if (args.length == 6) {
 			String dbPath = args[0];
 			JdbcConnectionPool cplocal = JdbcConnectionPool.create("jdbc:h2:" + dbPath, "sa", "sa");
-			GeneSymbolIndexer db = new GeneSymbolIndexer(cplocal, args[3]);
+			
+			NdexRestClientModelAccessLayer ndex = new NdexRestClientModelAccessLayer(
+					new NdexRestClient(null, null, args[5]));
+			GeneSymbolIndexer db = new GeneSymbolIndexer(cplocal, args[3], ndex);
 			db.setPathPrefix(args[1]);
 			db.rebuildIndex(UUID.fromString(args[2]), args[4]);
 		//	db.shutdown();
 			
 		} else {
 			
-			System.out.println ("Rebuild Index of a network GeneSymbolIndexer <db_path> <network_file_prefix> <network_list_file>");
-			System.out.println ("Rebuild Index of a network GeneSymbolIndexer <db_path> <network_file_prefix> networkUUID <type> <image_url>");
+			System.out.println ("Rebuild Index of a network GeneSymbolIndexer <db_path> <network_file_prefix> <network_list_file> <ndex_server_host_name>");
+			System.out.println ("Rebuild Index of a network GeneSymbolIndexer <db_path> <network_file_prefix> networkUUID <type> <image_url> <ndex_server_host_name>");
 			System.out.println ("Example: GeneSymbolIndexer /opt/ndex/services/interactome/genedb /opt/ndex/data/ xxx-xxxxx-xxxxx i http://example.com/image1.svg");	
+			System.out.println ("Note: Rebuilding the index from a network list file, all existing indexes will be cleared.");	
 		
 		}
     }

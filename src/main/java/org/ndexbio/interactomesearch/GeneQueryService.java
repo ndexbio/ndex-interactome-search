@@ -58,7 +58,11 @@ public class GeneQueryService {
 		dbTable = new Hashtable<>();
 		this.statusTable = new Hashtable<>();
 		
-		geneSearcher = new GeneSymbolIndexer(connectionPool, type);
+        // populate the db.
+		NdexRestClientModelAccessLayer ndex = new NdexRestClientModelAccessLayer(
+				new NdexRestClient(null, null, ndexServerName));
+		
+		geneSearcher = new GeneSymbolIndexer(connectionPool, type, ndex);
 		
 		resultPathPrefix = App.getWorkingPath() + "/task/" + type + "/";
 		
@@ -106,9 +110,6 @@ public class GeneQueryService {
 					}
 				});
 		
-        // populate the db.
-		NdexRestClientModelAccessLayer ndex = new NdexRestClientModelAccessLayer(
-				new NdexRestClient(null, null, ndexServerName));
 
 		for (NetworkShortSummary summary : geneSearcher.getIdMapper().values()) {
 			NetworkSummary sum = ndex.getNetworkSummaryById(UUID.fromString(summary.getUuid()));
@@ -119,8 +120,8 @@ public class GeneQueryService {
 			NdexPropertyValuePair iconURLProp = sum.getPropertyByName("__iconurl");
 			if (iconURLProp != null)
 				summary.setImageURL(iconURLProp.getValue());
-			NdexPropertyValuePair networkType = sum.getPropertyByName("networkType");
-			String listofstr = ATTRIBUTE_DATA_TYPE.LIST_OF_STRING.toString();
+			//NdexPropertyValuePair networkType = sum.getPropertyByName("networkType");
+			//String listofstr = ATTRIBUTE_DATA_TYPE.LIST_OF_STRING.toString();
 			summary.setType(type);
 			/*
 			if (summary.getType() == null && networkType != null && networkType.getDataType().equals(listofstr)) {
