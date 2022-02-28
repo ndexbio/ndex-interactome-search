@@ -19,11 +19,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
+
 import org.ndexbio.cxio.aspects.datamodels.ATTRIBUTE_DATA_TYPE;
 import org.ndexbio.cxio.aspects.datamodels.CyVisualPropertiesElement;
 import org.ndexbio.cxio.aspects.datamodels.EdgeAttributesElement;
@@ -55,10 +53,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NetworkQueryManager {
 
-	static Logger accLogger = Log.getRootLogger();
+	static Logger logger = LoggerFactory.getLogger(NetworkQueryManager.class);
 //  	Log.getRootLogger().info("Embedded Jetty logging started.", new Object[]{});
 
 //	private int depth;
@@ -160,7 +160,6 @@ public class NetworkQueryManager {
 
         float counter = 0 ;
         int total = r.getResultSet().size();
-        
         List<InteractomeSearchResult> resultList = new ArrayList<>(total);
         
         for (Map.Entry<Integer, GeneQueryNodes> e: r.getResultSet().entrySet()) {
@@ -349,9 +348,8 @@ public class NetworkQueryManager {
 			Hashtable<String,Object> status, Set<String> hitgenes) throws IOException, NdexException {
 	   
 		String netType = summary.getType();
-		if ( netType == null) 
-			accLogger.warn("Network " + summary.getUuid()+ " has no type on it.");
-		
+		if ( netType == null)
+			logger.warn("Network " + summary.getUuid()+ " has no type on it.");
 		if( netType!= null && netType.equals("i") ) {
 		   PPIQueryType startingQueryType = PPIQueryType.Direct;
 		   
@@ -360,7 +358,7 @@ public class NetworkQueryManager {
 			   
 		   return queryPPINetwork(taskId,summary.getUuid(), nodeIds, genes,
 					   status, hitgenes, startingQueryType);
-	   }  
+	    }  
 	   
 	   return adjacentQuery(taskId,summary.getUuid(), nodeIds, genes,
 				   status, hitgenes, false);
@@ -472,7 +470,7 @@ public class NetworkQueryManager {
 				}
 			}
 			
-			System.out.println( edgeTable.size()  + " edges from 2-step interconnect query.");
+			logger.info( edgeTable.size()  + " edges from 2-step interconnect query.");
 			//trim the nodes that only connect to one starting nodes.
 			Set<Long> finalNodes = new TreeSet<>();
 			for (Map.Entry<Long, NodeDegreeHelper> e : nodeNeighborIdTable.entrySet()) {
@@ -485,7 +483,7 @@ public class NetworkQueryManager {
 				}
 			}
 			
-			System.out.println( edgeTable.size()  + " edges after trim.");
+			logger.info( edgeTable.size()  + " edges after trim.");
 			
 			finalEdgeIds = new TreeSet<>(edgeTable.keySet());
 			
@@ -528,7 +526,7 @@ public class NetworkQueryManager {
 				
 				writer.closeFragment();
 				writer.endAspectFragment();
-				System.out.println("Query returned " + writer.getFragmentLength() + " edges.");
+				logger.info("interConnectQuery returned " + writer.getFragmentLength() + " edges.");
 				
 				if (finalEdgeIds.size() > edgeLimit) {
 					currentResult = createResult(netUUIDStr, hitgenes, finalNodes.size(), finalEdgeIds.size());
@@ -539,7 +537,7 @@ public class NetworkQueryManager {
 					mde.setIdCounter((finalEdgeIds.size() == 0 ? Long.valueOf(0) : Collections.max(finalEdgeIds)));
 					postmd.add(mde);
 
-					System.out.println("done writing out edges.");
+					logger.info("done writing out edges.");
 
 					finalNodes.addAll(nodeIds);
 
@@ -596,7 +594,7 @@ public class NetworkQueryManager {
 
 			long t2 = Calendar.getInstance().getTimeInMillis();
 			status.put("wallTime", Long.valueOf(t2 - t1));
-			accLogger.info("Total " + (t2 - t1) / 1000f + " seconds. Returned " + finalEdgeIds.size() + " edges and "
+			logger.info("Total " + (t2 - t1) / 1000f + " seconds. Returned " + finalEdgeIds.size() + " edges and "
 					+ nodeIds.size() + " nodes.", new Object[] {});
 		}
 		
@@ -680,7 +678,7 @@ public class NetworkQueryManager {
 					}
 				}
 				
-				accLogger.info("Query returned " + writer.getFragmentLength() + " edges.");
+				logger.info("Query returned " + writer.getFragmentLength() + " edges.");
 				writer.closeFragment();
 				writer.endAspectFragment();
 			
@@ -715,7 +713,7 @@ public class NetworkQueryManager {
 		
 		long t2 = Calendar.getInstance().getTimeInMillis();
         status.put("wallTime", Long.valueOf(t2-t1));
-		accLogger.info("Total " + (t2-t1)/1000f + " seconds. Returned " + edgeIds.size() + " edges and " + nodeIds.size() + " nodes.",
+		logger.info("Total " + (t2-t1)/1000f + " seconds. Returned " + edgeIds.size() + " edges and " + nodeIds.size() + " nodes.",
 				new Object[]{});
 		
 		return currentResult;
@@ -1126,7 +1124,7 @@ public class NetworkQueryManager {
 
 				writer.closeFragment();
 				writer.endAspectFragment();
-				System.out.println("Query returned " + writer.getFragmentLength() + " edges.");
+				logger.info("adjacentQuery returned " + writer.getFragmentLength() + " edges.");
 
 			}
 
@@ -1225,7 +1223,7 @@ public class NetworkQueryManager {
 
 			long t2 = Calendar.getInstance().getTimeInMillis();
 			status.put("wallTime", Long.valueOf(t2 - t1));
-			accLogger.info("Total " + (t2 - t1) / 1000f + " seconds. Returned " + edgeIds.size() + " edges.",
+			logger.info("Total " + (t2 - t1) / 1000f + " seconds. Returned " + edgeIds.size() + " edges.",
 					new Object[] {});
 		}
 		
