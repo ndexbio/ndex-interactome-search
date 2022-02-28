@@ -88,7 +88,6 @@ public class GeneAssociationResource {
 		UUID taskId = App.getAssociationService().getTaskIdFromCache(normalizedGeneSet);
 		
 		String url = "http://"+App.getServiceHost()  +":"+App.getPort() + "/interactome/geneassociation/v1/search/" + taskId + "/status";
-		System.out.println("association Running query: " + url);
 	    Hashtable<String,String> result = new Hashtable<>();
 	    result.put("id", taskId.toString());
 		return Response.accepted().location(new URI (url)).entity(result).build();
