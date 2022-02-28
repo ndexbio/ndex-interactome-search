@@ -341,7 +341,7 @@ public class GeneSymbolIndexer {
 				}				
 				
 				GeneSymbolIndexer db2 = new GeneSymbolIndexer(cplocal,"a", ndex);
-				db1.removeAllIndexes();
+				db2.removeAllIndexes();
 				db2.setPathPrefix(args[1]);
 				for (InteractomeNetworkEntry entry: dataSet.getAssociationNetworks()) {
 					db2.rebuildIndex(UUID.fromString(entry.getUuid()), entry.getImageURL());
