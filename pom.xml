@@ -5,23 +5,25 @@
 
 	<groupId>org.ndexbio</groupId>
 	<artifactId>ndex-interactome-search</artifactId>
-	<version>0.3.1</version>
+	<version>0.8.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>ndex-interactome-search</name>
 
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<resteasy.version>3.1.4.Final</resteasy.version>
-		<junit.version>4.11</junit.version>
-		<servlet-api.version>4.0.0</servlet-api.version>
-		<jetty.version>9.4.15.v20190215</jetty.version>
-
-		<maven-shade-plugin.version>3.1.0</maven-shade-plugin.version>
-		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
+            <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
+            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+            <resteasy.version>3.1.4.Final</resteasy.version>
+            <junit.version>4.11</junit.version>
+            <servlet-api.version>4.0.0</servlet-api.version>
+            <jetty.version>9.4.45.v20220203</jetty.version>
+            <ndex-java-client.version>2.5.3-SNAPSHOT</ndex-java-client.version>
+            <guava.version>27.0.1-jre</guava.version>
+            <logback.version>1.2.3</logback.version>
+            <h2.version>1.4.196</h2.version>
+            <mockito.version>3.6.28</mockito.version>
+            <maven-shade-plugin.version>3.1.0</maven-shade-plugin.version>
+            <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
 	</properties>
 
    <repositories>
@@ -34,7 +36,7 @@
                 <enabled>true</enabled>
             </releases>
             <name>Cytoscape Releases</name>
-            <url>http://nrnb-nexus.ucsd.edu/repository/cytoscape_releases/</url>
+            <url>https://nrnb-nexus.ucsd.edu/repository/cytoscape_releases/</url>
         </repository>
         <repository>
             <id>cytoscape_snapshots</id>
@@ -45,7 +47,7 @@
                 <enabled>false</enabled>
             </releases>
             <name>Cytoscape Snapshots</name>
-            <url>http://nrnb-nexus.ucsd.edu/repository/cytoscape_snapshots/</url>
+            <url>https://nrnb-nexus.ucsd.edu/repository/cytoscape_snapshots/</url>
         </repository>
     </repositories>
 
@@ -104,49 +106,49 @@
 		<dependency>
 			<groupId>org.ndexbio.client</groupId>
 			<artifactId>ndex-java-client</artifactId>
-			<version>2.5.2</version>
+			<version>${ndex-java-client.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>27.1-jre</version>
+			<version>${guava.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
-			<version>1.2.3</version>
+			<version>${logback.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<version>1.4.196</version>
+			<version>${h2.version}</version>
 		</dependency>
-<!--dependency>
-    <groupId>org.junit.jupiter</groupId>
-    <artifactId>junit-jupiter-engine</artifactId>
-    <version>5.8.2</version>
-    <scope>test</scope>
-</dependency-->
-<!-- https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter -->
-<dependency>
-    <groupId>org.mockito</groupId>
-    <artifactId>mockito-junit-jupiter</artifactId>
-    <version>3.12.4</version>
-    <scope>test</scope>
-</dependency>
+                <!--dependency>
+                    <groupId>org.junit.jupiter</groupId>
+                    <artifactId>junit-jupiter-engine</artifactId>
+                    <version>5.8.2</version>
+                    <scope>test</scope>
+                </dependency-->
+                <!-- https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter -->
+                <dependency>
+                    <groupId>org.mockito</groupId>
+                    <artifactId>mockito-junit-jupiter</artifactId>
+                    <version>${mockito.version}</version>
+                    <scope>test</scope>
+                </dependency>
 
 		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-			<version>3.12.4</version>
-			<scope>test</scope>
+                    <groupId>org.mockito</groupId>
+                    <artifactId>mockito-core</artifactId>
+                    <version>${mockito.version}</version>
+                    <scope>test</scope>
 		</dependency>
 		<dependency>
-  <groupId>org.mockito</groupId>
-  <artifactId>mockito-inline</artifactId>
-  <version>3.12.4</version>
-</dependency>
-	</dependencies>
+                    <groupId>org.mockito</groupId>
+                    <artifactId>mockito-inline</artifactId>
+                    <version>${mockito.version}</version>
+                </dependency>
+            </dependencies>
 	<scm>
 	  <connection>scm:git:https://github.com/cytoscape/ndex-interactome-search.git</connection>
     </scm>
@@ -154,7 +156,18 @@
 	<build>
 		<finalName>interactomeSearch-${project.version}</finalName>
 		<plugins>
-
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${maven-compiler-plugin.version}</version>
+                        <configuration>
+                            <source>11</source>
+                            <target>11</target>
+                            <compilerArguments>
+                                <endorseddirs>${endorsed.dir}</endorseddirs>
+                            </compilerArguments>
+                        </configuration>
+                    </plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
