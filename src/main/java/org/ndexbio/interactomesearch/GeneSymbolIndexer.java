@@ -75,6 +75,7 @@ public class GeneSymbolIndexer {
 					  NetworkShortSummary summary = new NetworkShortSummary();
 					  summary.setUuid(rs.getString(2));
 					  summary.setImageURL(rs.getString(3));
+					  summary.setType(networkType);
 					  netIdMapper.put(Integer.valueOf(rs.getInt(1)), summary );
 					}
 				}
@@ -114,7 +115,7 @@ public class GeneSymbolIndexer {
 	 */
 	public void rebuildIndex(UUID networkUUID, String imageURL) throws SQLException, JsonProcessingException, IOException, NdexException {
 		
-		System.out.println("Rebuild Index on network " + networkUUID);
+		System.out.println("Rebuild Index on network " + networkUUID + " with type: " + networkType);
 		
 		removeIndex (networkUUID);
 
@@ -341,7 +342,7 @@ public class GeneSymbolIndexer {
 				}				
 				
 				GeneSymbolIndexer db2 = new GeneSymbolIndexer(cplocal,"a", ndex);
-				db1.removeAllIndexes();
+				db2.removeAllIndexes();
 				db2.setPathPrefix(args[1]);
 				for (InteractomeNetworkEntry entry: dataSet.getAssociationNetworks()) {
 					db2.rebuildIndex(UUID.fromString(entry.getUuid()), entry.getImageURL());
