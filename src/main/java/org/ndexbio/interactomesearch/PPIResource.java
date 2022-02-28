@@ -87,8 +87,7 @@ public class PPIResource {
 		
 		UUID taskId = App.getInteractionService().getTaskIdFromCache(normalizedGeneSet);
 		
-		String url = "http://"+App.getServiceHost()  +":"+App.getPort() + "/interactome/v1/search/" + taskId + "/status";
-		
+		String url = "http://"+App.getServiceHost()  +":"+App.getPort() + "/interactome/ppi/v1/search/" + taskId + "/status";
 	    Hashtable<String,String> result = new Hashtable<>();
 	    result.put("id", taskId.toString());
 		return Response.accepted().location(new URI (url)).entity(result).build();
