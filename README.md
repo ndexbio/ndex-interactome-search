@@ -11,7 +11,7 @@ networks etc.
 
 **Requirements**:
 
-* Java 8+ JDK
+* Java 11+ JDK
 * Maven 3.6 or higher 
 
 Commands below build Interactome Service assuming machine has Git command line tools installed and 
@@ -76,17 +76,18 @@ cat networks.json
 After creating the configuration file, build the index using this command
 
 ```Bash
-java -classpath interactomeSearch-<VERSION>.jar org.ndexbio.interactomesearch.GeneSymbolIndexer ./genedb /opt/ndex/data/ networks.json
+java -classpath interactomeSearch-<VERSION>.jar org.ndexbio.interactomesearch.GeneSymbolIndexer ./genedb /opt/ndex/data/ networks.json public.ndexbio.org
 ```
 *genedb* is the name of the database you created for interactome search.  */opt/ndex/data/* is the path of
-the NDEx network data storage.  *networks.json* is the name of configuration file.
+the NDEx network data storage.  *networks.json* is the name of configuration file. *public.ndexbio.org* is the host name of
+the NDEx server.
 
 ### Step 3 Start the Interactome Search service
 You can use this command to start the service:
 
 ```Bash
 nohup java -Xmx1g -Dndex.host="http://dev.ndexbio.org/v2" -Dndex.interactomehost=dev.ndexbio.org -Dndex.interactomedb=/opt/ndex/services/interactome -Dndex.queryport=8287 
--jar interactomeSearch-0.3.0.jar & 1>out
+-jar interactomeSearch-<VERSION>.jar & 1>out
 ```
 The service supports the following command line parameters:
 * **ndex.host** Host name of the NDEx server that this service search on. Default value is *public.ndexbio.org*.
