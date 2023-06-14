@@ -18,7 +18,7 @@
             <servlet-api.version>4.0.0</servlet-api.version>
             <jetty.version>9.4.45.v20220203</jetty.version>
             <ndex-java-client.version>2.5.3-SNAPSHOT</ndex-java-client.version>
-            <guava.version>27.0.1-jre</guava.version>
+            <guava.version>32.0.0-jre</guava.version>
             <logback.version>1.2.3</logback.version>
             <h2.version>1.4.196</h2.version>
             <mockito.version>3.6.28</mockito.version>
