@@ -20,7 +20,7 @@
             <ndex-java-client.version>2.5.3-SNAPSHOT</ndex-java-client.version>
             <guava.version>27.0.1-jre</guava.version>
             <logback.version>1.2.3</logback.version>
-            <h2.version>1.4.196</h2.version>
+            <h2.version>2.2.220</h2.version>
             <mockito.version>3.6.28</mockito.version>
             <maven-shade-plugin.version>3.1.0</maven-shade-plugin.version>
             <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
