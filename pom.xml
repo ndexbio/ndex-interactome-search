@@ -5,7 +5,7 @@
 
 	<groupId>org.ndexbio</groupId>
 	<artifactId>ndex-interactome-search</artifactId>
-	<version>0.8.1-SNAPSHOT</version>
+	<version>0.9.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>ndex-interactome-search</name>
@@ -16,8 +16,8 @@
             <resteasy.version>3.1.4.Final</resteasy.version>
             <junit.version>4.11</junit.version>
             <servlet-api.version>4.0.0</servlet-api.version>
-            <jetty.version>9.4.45.v20220203</jetty.version>
-            <ndex-java-client.version>2.5.4-SNAPSHOT</ndex-java-client.version>
+            <jetty.version>9.4.53.v20231009</jetty.version>
+            <ndex-java-client.version>2.5.5</ndex-java-client.version>
             <guava.version>27.0.1-jre</guava.version>
             <logback.version>1.2.3</logback.version>
             <h2.version>1.4.196</h2.version>
